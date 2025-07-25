@@ -2,144 +2,136 @@
 <html>
 <head>
   <title>Food Order</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    h2 { color: #007bff; }
-    label { display: block; margin: 10px 0 5px; }
-    .item-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .item-row input[type="number"] { width: 60px; }
-    .total { font-weight: bold; margin-top: 10px; }
-    .disabled { color: gray; }
+    body { font-family: Arial, sans-serif; padding: 10px; }
+    h2 { color: #333; }
+    .menu-item { margin-bottom: 10px; }
+    .menu-container { max-height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; }
+    .total { font-weight: bold; margin-top: 15px; }
+    .upi-box { margin-top: 20px; text-align: center; }
+    .upi-box img { max-width: 200px; }
   </style>
 </head>
 <body>
-  <h2>Order Your Food</h2>
-  <div id="menu"></div>
+  <h2>Menu</h2>
+  <form id="orderForm">
+    <div class="menu-container" id="menuList">Loading menu...</div>
+    <div class="total" id="totalPrice">Total: ₹0</div>
+    <h3>Your Details</h3>
+    <input type="text" name="name" placeholder="Name" required /><br/><br/>
+    <input type="text" name="mobile" placeholder="Mobile" required /><br/><br/>
+    <input type="text" name="address" placeholder="Address" required /><br/><br/>
+    <button type="submit">Place Order</button>
+  </form>
 
-  <div class="total">Total: ₹<span id="total">0</span></div>
-
-  <h3>Your Details</h3>
-  <label>Name:</label>
-  <input type="text" id="name" required />
-  <label>Phone:</label>
-  <input type="text" id="phone" required />
-  <label>Address:</label>
-  <textarea id="address" rows="2"></textarea>
-
-  <h3>UPI Payment</h3>
-  <img id="qr" src="https://via.placeholder.com/200x200.png?text=Scan+to+Pay" alt="QR Code" width="200" />
-
-  <br><br>
-  <button onclick="submitOrder()">Submit Order</button>
+  <div class="upi-box">
+    <h3>Pay via UPI</h3>
+    <p>Scan & Pay to <strong>Vishal Kulkarni</strong></p>
+    <img src="https://upi-qr-code-image-link.com/upi-qr.jpg" alt="UPI QR Code" />
+    <p>UPI ID: <strong>vishalkulkarni24@oksbi</strong></p>
+  </div>
 
   <script>
-    const sheetURL = 'https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec';
+    let menu = [];
     let config = {};
-    let menuItems = [];
+    let menuContainer = document.getElementById('menuList');
+    let totalBox = document.getElementById('totalPrice');
 
-    function fetchConfigAndMenu() {
-      fetch(sheetURL + '?action=config')
-        .then(res => res.json())
-        .then(data => {
-          config = data;
-          if (config.LIVE !== 'TRUE') {
-            document.body.innerHTML = '<h2>Ordering is currently closed.</h2>';
-            return;
-          }
-          fetchMenu();
-        });
-    }
-
-    function fetchMenu() {
-      fetch(sheetURL + '?action=menu')
-        .then(res => res.json())
-        .then(data => {
-          menuItems = data;
-          renderMenu();
-        });
+    async function fetchMenu() {
+      const res = await fetch('https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec?type=menu');
+      const data = await res.json();
+      menu = data.menu || [];
+      config = data.config || {};
+      renderMenu();
     }
 
     function renderMenu() {
-      const menuDiv = document.getElementById('menu');
-      menuItems.forEach((item, i) => {
-        const isAvailable = item.Available === 'TRUE';
-        const row = document.createElement('div');
-        row.className = 'item-row' + (isAvailable ? '' : ' disabled');
-        row.innerHTML = `
-          <label>
-            <input type="checkbox" ${!isAvailable ? 'disabled' : ''} onchange="toggleItem(${i}, this)">
-            ${item.Item} — ₹${item.Price}
-          </label>
-          <input type="number" id="qty-${i}" value="1" min="1" onchange="updateTotal()" disabled />
-        `;
-        menuDiv.appendChild(row);
-      });
-    }
+      if (config.LIVE !== 'TRUE') {
+        menuContainer.innerHTML = '<p>Currently not accepting orders.</p>';
+        return;
+      }
 
-    function toggleItem(index, checkbox) {
-      const qtyInput = document.getElementById('qty-' + index);
-      qtyInput.disabled = !checkbox.checked;
-      updateTotal();
+      menuContainer.innerHTML = '';
+      menu.forEach((item, idx) => {
+        if (item.Available !== 'TRUE') return;
+        let div = document.createElement('div');
+        div.className = 'menu-item';
+        div.innerHTML = `
+          <input type="checkbox" data-index="${idx}" />
+          ${item.Item} - ₹${item.Price}
+          Qty: <input type="number" min="1" value="1" data-qty-index="${idx}" style="width:50px;" disabled />
+        `;
+        menuContainer.appendChild(div);
+      });
+
+      menuContainer.querySelectorAll('input[type="checkbox"]').forEach(chk => {
+        chk.addEventListener('change', updateTotal);
+      });
+
+      menuContainer.querySelectorAll('input[type="number"]').forEach(qty => {
+        qty.addEventListener('input', updateTotal);
+      });
+
+      // Toggle qty box
+      menuContainer.addEventListener('change', e => {
+        if (e.target.type === 'checkbox') {
+          const idx = e.target.getAttribute('data-index');
+          const qtyInput = menuContainer.querySelector(`input[data-qty-index="${idx}"]`);
+          qtyInput.disabled = !e.target.checked;
+        }
+      });
     }
 
     function updateTotal() {
       let total = 0;
-      menuItems.forEach((item, i) => {
-        const qtyInput = document.getElementById('qty-' + i);
-        const checkbox = qtyInput?.previousElementSibling?.querySelector('input[type="checkbox"]');
-        if (checkbox && checkbox.checked) {
-          const qty = parseInt(qtyInput.value) || 0;
-          total += qty * parseFloat(item.Price);
-        }
+      menuContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(chk => {
+        let idx = chk.getAttribute('data-index');
+        let qty = parseInt(menuContainer.querySelector(`input[data-qty-index="${idx}"]`).value) || 1;
+        total += parseInt(menu[idx].Price) * qty;
       });
-      document.getElementById('total').innerText = total.toFixed(2);
+      totalBox.innerText = `Total: ₹${total}`;
     }
 
-    function submitOrder() {
-      const name = document.getElementById('name').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      const address = document.getElementById('address').value.trim();
-      if (!name || !phone) {
-        alert('Please enter your name and phone number.');
-        return;
-      }
+    document.getElementById('orderForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      let form = e.target;
+      let items = [];
+      let total = 0;
 
-      const selectedItems = [];
-      menuItems.forEach((item, i) => {
-        const checkbox = document.getElementById('qty-' + i).previousElementSibling.querySelector('input[type="checkbox"]');
-        if (checkbox && checkbox.checked) {
-          const qty = parseInt(document.getElementById('qty-' + i).value) || 1;
-          selectedItems.push(`${item.Item} x ${qty}`);
-        }
+      menuContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(chk => {
+        let idx = chk.getAttribute('data-index');
+        let qty = parseInt(menuContainer.querySelector(`input[data-qty-index="${idx}"]`).value) || 1;
+        items.push(`${menu[idx].Item} x${qty}`);
+        total += parseInt(menu[idx].Price) * qty;
       });
 
-      if (selectedItems.length === 0) {
-        alert('Please select at least one item.');
-        return;
-      }
+      if (!items.length) return alert('Please select at least one item.');
 
-      const order = {
-        name,
-        phone,
-        address,
-        items: selectedItems.join(', '),
-        total: document.getElementById('total').innerText,
+      const payload = {
+        name: form.name.value,
+        mobile: form.mobile.value,
+        address: form.address.value,
+        items: items.join(', '),
+        total: total
       };
 
-      fetch(sheetURL, {
+      const res = await fetch('https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec', {
         method: 'POST',
-        body: JSON.stringify(order),
-        headers: { 'Content-Type': 'application/json' }
-      })
-      .then(res => res.text())
-      .then(response => {
-        alert('Order placed successfully!');
-        location.reload();
-      })
-      .catch(() => alert('Failed to place order.'));
-    }
+        body: JSON.stringify(payload)
+      });
 
-    fetchConfigAndMenu();
+      const result = await res.json();
+      if (result.status === 'success') {
+        alert('Order placed!');
+        form.reset();
+        updateTotal();
+      } else {
+        alert('Error placing order.');
+      }
+    });
+
+    fetchMenu();
   </script>
 </body>
 </html>
