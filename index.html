@@ -1,110 +1,100 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Annapurna Kitchen - Food Order</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Annapurna Kitchen</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #fdf6f0;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #c0392b;
-    }
-    .menu-container {
-      max-height: 250px;
-      overflow-y: scroll;
-      border: 1px solid #ddd;
-      padding: 10px;
-      margin-bottom: 20px;
-      background-color: #fff;
-      border-radius: 8px;
-    }
-    .menu-item {
-      margin: 8px 0;
-    }
-    #total {
-      font-weight: bold;
-      font-size: 18px;
-      margin-bottom: 20px;
-    }
-    #qrContainer {
-      margin-top: 20px;
-      text-align: center;
-    }
-    button {
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      font-size: 16px;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-    button:disabled {
-      background-color: #ccc;
-    }
+    body { font-family: sans-serif; padding: 1em; }
+    h2 { color: #444; }
+    label, input, textarea, select { display: block; margin-bottom: 10px; width: 100%; max-width: 400px; }
+    input, textarea, select { padding: 6px; }
+    table { width: 100%; max-width: 600px; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    button { padding: 10px 20px; margin-top: 10px; }
+    .upi-container img { max-width: 200px; margin-bottom: 10px; }
   </style>
 </head>
 <body>
+  <h2>Welcome to Annapurna Kitchen</h2>
 
-  <h1>Annapurna Kitchen</h1>
-
-  <div class="menu-container" id="menu">
-    <div class="menu-item"><input type="checkbox" data-price="80"> Sabudana Khichdi – ₹80</div>
-    <div class="menu-item"><input type="checkbox" data-price="100"> Puran Poli – ₹100</div>
-    <div class="menu-item"><input type="checkbox" data-price="60"> Batata Bhaji – ₹60</div>
-    <div class="menu-item"><input type="checkbox" data-price="120"> Masale Bhaat – ₹120</div>
-    <div class="menu-item"><input type="checkbox" data-price="90"> Kothimbir Vadi – ₹90</div>
-    <div class="menu-item"><input type="checkbox" data-price="70"> Sheera – ₹70</div>
-    <div class="menu-item"><input type="checkbox" data-price="150"> Combo Meal – ₹150</div>
+  <div class="upi-container">
+    <p>Pay using UPI ID: <strong>9766448463@apl</strong></p>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?data=upi://pay?pa=9766448463@apl&pn=Janhavi%20-%20Annapurna%20Kitchen&am=1&cu=INR" alt="UPI QR Code" />
   </div>
 
-  <div id="total">Total: ₹0</div>
+  <form id="orderForm">
+    <label for="name">Name:</label>
+    <input type="text" id="name" name="name" required />
 
-  <button onclick="generateQRCode()">Pay via UPI</button>
-  <div id="qrContainer"></div>
+    <label for="mobile">Mobile Number:</label>
+    <input type="tel" id="mobile" name="mobile" required />
 
-  <button id="placeOrderBtn" disabled>Place Order</button>
+    <label for="address">Address:</label>
+    <textarea id="address" name="address" rows="2" required></textarea>
+
+    <h3>Menu</h3>
+    <table>
+      <thead>
+        <tr><th>Item</th><th>Price</th><th>Qty</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Sabudana Ladoo (6 pcs)</td><td>₹1</td><td><input type="number" min="0" value="0" name="ladoo" /></td></tr>
+        <tr><td>Besan Ladoo (6 pcs)</td><td>₹2</td><td><input type="number" min="0" value="0" name="besan" /></td></tr>
+      </tbody>
+    </table>
+
+    <button type="submit">Submit Order</button>
+  </form>
 
   <script>
-    const checkboxes = document.querySelectorAll('.menu-item input');
-    const totalDisplay = document.getElementById('total');
-    let total = 0;
+    const sheetUrl = 'https://script.google.com/macros/s/PASTE_YOUR_DEPLOYED_SCRIPT_URL_HERE/exec';
+    const telegramBotToken = 'PASTE_YOUR_BOT_TOKEN'; // comment for now
+    const telegramChatId = 'PASTE_YOUR_CHAT_ID'; // comment for now
 
-    checkboxes.forEach(cb => {
-      cb.addEventListener('change', () => {
-        const price = parseFloat(cb.getAttribute('data-price'));
-        total += cb.checked ? price : -price;
-        totalDisplay.innerText = `Total: ₹${total}`;
-      });
-    });
+    document.getElementById('orderForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
 
-    function generateQRCode() {
-      if (total <= 0) {
-        alert('Please select at least one item.');
-        return;
+      const name = document.getElementById('name').value;
+      const mobile = document.getElementById('mobile').value;
+      const address = document.getElementById('address').value;
+      const ladoo = parseInt(document.querySelector('[name="ladoo"]').value || '0');
+      const besan = parseInt(document.querySelector('[name="besan"]').value || '0');
+
+      const total = ladoo * 1 + besan * 2;
+
+      const data = {
+        name, mobile, address, ladoo, besan, total
+      };
+
+      try {
+        const response = await fetch(sheetUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        alert('Order submitted! Please confirm payment manually.');
+        document.getElementById('orderForm').reset();
+
+        // Telegram notification (optional)
+        /*
+        await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: telegramChatId,
+            text: `New Order:\nName: ${name}\nMobile: ${mobile}\nItems: Sabudana Ladoo: ${ladoo}, Besan Ladoo: ${besan}\nTotal: ₹${total}`
+          })
+        });
+        */
+
+      } catch (err) {
+        alert('There was an error submitting your order.');
       }
-
-      const upiID = '9766448463@apl';
-      const name = 'Janhavi - Annapurna Kitchen';
-      const upiURL = `upi://pay?pa=${upiID}&pn=${encodeURIComponent(name)}&am=${total}&cu=INR`;
-      const qrAPI = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiURL)}`;
-
-      const qrContainer = document.getElementById('qrContainer');
-      qrContainer.innerHTML = `
-        <h3>Scan to Pay</h3>
-        <img src="${qrAPI}" alt="UPI QR Code" />
-        <p>UPI ID: ${upiID}</p>
-      `;
-
-      document.getElementById('placeOrderBtn').disabled = false;
-    }
+    });
   </script>
-
 </body>
 </html>
