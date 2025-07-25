@@ -6,8 +6,22 @@
     "CHATID": ""
   },
   "menu": [
-    { "name": "Sabudana Ladoo (6 pcs)", "price": "250", "available": "true" },
-    { "name": "Upwas Thali", "price": "120", "available": "true" },
-    { "name": "Farali Pattice", "price": "60", "available": "false" }
+    { "name": "Puranpoli (1P)", "price": "89", "available": "true" },
+    { "name": "Puri Bhaji (4P Puri)", "price": "99", "available": "true" },
+    { "name": "Masalebhat (serves 1)", "price": "149", "available": "true" },
+    { "name": "Masalebhat (serves 2/3)", "price": "289", "available": "true" },
+    { "name": "Kothimbir Vadi (6P)", "price": "59", "available": "true" },
+    { "name": "Batata Vada (4P)", "price": "99", "available": "true" },
+    { "name": "Fried Modak (11P)", "price": "149", "available": "true" },
+    { "name": "Fried Modak (21P)", "price": "249", "available": "true" },
+    { "name": "Besan Ladu (Approx 250gms)", "price": "249", "available": "true" },
+    { "name": "Onion Thalipith (2P) ", "price": "99", "available": "true" },
+    { "name": "Kothimbir Thalipith (2P) ", "price": "129", "available": "true" },
+    { "name": "Sabudana Ladu (Approx 250gms)", "price": "249", "available": "true" },
+    { "name": "Shengdana Ladu (Approx 250gms)", "price": "299", "available": "true" },
+    { "name": "Bhagar (serves 1)", "price": "149", "available": "true" },
+    { "name": "Bhagar (serves 2/3)", "price": "289", "available": "true" },
+    { "name": "Sabudana Khichadi (serves 2)", "price": "199", "available": "true" },
+    { "name": "Upwasache Thalipith (2P) + curd", "price": "99", "available": "true" }
   ]
 }
