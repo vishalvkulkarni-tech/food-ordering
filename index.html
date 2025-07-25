@@ -3,24 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Sabudana Laddoo</title>
+  <title>Food Order</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; background: #f9f9f9; }
     h2 { color: #c0392b; }
-    label, input, button { display: block; width: 100%; margin-bottom: 10px; }
-    input, button { padding: 10px; font-size: 1em; }
+    label, input, select, button { display: block; width: 100%; margin-bottom: 10px; }
+    input, select, button { padding: 10px; font-size: 1em; }
     button { background: #27ae60; color: white; border: none; cursor: pointer; }
     button:hover { background: #219150; }
     a.upi { display: inline-block; margin: 15px 0; background: #2980b9; color: white; padding: 10px; text-align: center; text-decoration: none; }
     a.upi:hover { background: #1f6391; }
+    #orderForm button:disabled { background: #999; cursor: not-allowed; }
   </style>
 </head>
 <body>
-  <h2>Order Sabudana Laddoo</h2>
-  <p>6 pieces for <strong>₹1</strong> (for test)</p>
+  <h2>Order Food Items</h2>
 
-  <a class="upi" href="upi://pay?pa=9766448463@apl&pn=Vishal%20Kulkarni&am=1&cu=INR">
-    Pay ₹1 via UPI
+  <label for="item">Select Item:</label>
+  <select id="item" onchange="updatePrice()">
+    <option value="1|Sabudana Laddoo">Sabudana Laddoo - ₹1</option>
+    <option value="10|Poha">Poha - ₹10</option>
+    <option value="20|Upma">Upma - ₹20</option>
+    <option value="15|Idli">Idli - ₹15</option>
+  </select>
+
+  <p>Total Price: <strong id="price">₹1</strong></p>
+
+  <a class="upi" id="upiLink" href="upi://pay?pa=9766448463@apl&pn=Vishal%20Kulkarni&am=1&cu=INR" target="_blank">
+    Pay via UPI
   </a>
 
   <form id="orderForm" onsubmit="sendOrder(event)">
@@ -30,15 +40,28 @@
     <label for="address">Delivery Address:</label>
     <input type="text" id="address" name="address" required />
 
-    <button type="submit">I have paid – Place Order</button>
+    <button type="submit" id="submitBtn" disabled>Submit Order</button>
   </form>
 
   <script>
+    let selectedAmount = 1;
+    let selectedItem = "Sabudana Laddoo";
+
+    function updatePrice() {
+      const [amount, item] = document.getElementById("item").value.split('|');
+      selectedAmount = amount;
+      selectedItem = item;
+      document.getElementById("price").innerText = `₹${amount}`;
+      const upiURL = `upi://pay?pa=9766448463@apl&pn=Vishal%20Kulkarni&am=${amount}&cu=INR`;
+      document.getElementById("upiLink").href = upiURL;
+      document.getElementById("submitBtn").disabled = false;
+    }
+
     function sendOrder(event) {
       event.preventDefault();
       const name = document.getElementById('name').value.trim();
       const address = document.getElementById('address').value.trim();
-      const msg = `Sabudana Laddoo Test Order:\nName: ${name}\nAddress: ${address}\nAmount: ₹1 (paid)`;
+      const msg = `Food Order:\nName: ${name}\nAddress: ${address}\nItem: ${selectedItem}\nAmount: ₹${selectedAmount} (paid)`;
       const encoded = encodeURIComponent(msg);
       const whatsappURL = `https://api.callmebot.com/whatsapp.php?phone=+919766448463&text=${encoded}&apikey=free`;
       window.open(whatsappURL, '_blank');
@@ -46,3 +69,4 @@
   </script>
 </body>
 </html>
+
