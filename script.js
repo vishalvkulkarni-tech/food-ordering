@@ -1,101 +1,100 @@
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec';
+let menuData = [];
+let config = {};
+let total = 0;
 
-function logDebug(msg) {
-  document.getElementById('debug').innerText += msg + '\n';
-  console.log(msg);
-}
-
-async function fetchMenu() {
-  try {
-    const response = await fetch(`${SHEET_URL}?action=menu`);
-    const data = await response.json();
-    logDebug("Menu data received: " + JSON.stringify(data));
-
-    if (data.status !== 'success' || !Array.isArray(data.menu)) {
-      throw new Error("Menu not available or incorrect format.");
-    }
-
-    const menuContainer = document.getElementById('menu');
-    menuContainer.innerHTML = '';
-
-    data.menu.forEach((item, idx) => {
-      const itemName = item.name || `Item ${idx + 1}`;
-      const price = parseFloat(item.price || 0);
-      const itemDiv = document.createElement('div');
-      itemDiv.className = 'item';
-      itemDiv.innerHTML = `
-        <span>${itemName} (₹${price})</span>
-        <input type="number" min="0" value="0" data-name="${itemName}" data-price="${price}" onchange="updateTotal()" />
-      `;
-      menuContainer.appendChild(itemDiv);
-    });
-  } catch (error) {
-    document.getElementById('menu').innerText = 'Error loading menu.';
-    logDebug('Menu fetch error: ' + error.message);
-  }
-}
-
-function updateTotal() {
-  const inputs = document.querySelectorAll('#menu input[type="number"]');
-  let total = 0;
-  inputs.forEach(input => {
-    const qty = parseFloat(input.value || 0);
-    const price = parseFloat(input.dataset.price || 0);
-    total += qty * price;
+fetch('menu.json')
+  .then(res => res.json())
+  .then(data => {
+    config = data.config;
+    menuData = data.menu;
+    buildMenu();
   });
-  document.getElementById('total').innerText = total.toFixed(2);
+
+function buildMenu() {
+  const menuDiv = document.getElementById('menu');
+  menuData.forEach((item, index) => {
+    const available = item.available.toLowerCase() === 'true';
+    if (!available) return;
+
+    const div = document.createElement('div');
+    div.className = 'menu-item';
+    div.innerHTML = `
+      <label>
+        <input type="checkbox" onchange="updateTotal(${index})" id="chk${index}">
+        ${item.name} (₹${item.price})
+      </label>
+      <input type="number" id="qty${index}" value="1" min="1" max="20" disabled onchange="updateTotal(${index})">
+    `;
+    menuDiv.appendChild(div);
+  });
 }
 
-async function submitOrder() {
-  const name = document.getElementById('custName').value.trim();
-  const mobile = document.getElementById('custMobile').value.trim();
-  if (!name || !mobile) {
-    alert("Please fill customer details.");
+function updateTotal(index) {
+  const chk = document.getElementById('chk' + index);
+  const qty = document.getElementById('qty' + index);
+  qty.disabled = !chk.checked;
+
+  total = 0;
+  menuData.forEach((item, i) => {
+    const c = document.getElementById('chk' + i);
+    const q = document.getElementById('qty' + i);
+    if (c && c.checked) {
+      const price = parseFloat(item.price);
+      const quantity = parseInt(q.value);
+      total += price * quantity;
+    }
+  });
+  document.getElementById('total').innerText = total;
+}
+
+document.getElementById('payNow').addEventListener('click', () => {
+  if (total <= 0) {
+    alert("Please select at least one item.");
+    return;
+  }
+  const qr = new QRious({
+    element: document.getElementById('qrcode'),
+    value: `upi://pay?pa=9766448463@apl&pn=AnnapurnaKitchen&am=${total}&cu=INR`,
+    size: 200
+  });
+  document.getElementById('qrSection').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('userDetails').style.display = 'block';
+  }, 30000);
+});
+
+document.getElementById('submitOrder').addEventListener('click', () => {
+  const name = document.getElementById('name').value;
+  const addr = document.getElementById('address').value;
+  const mob = document.getElementById('mobile').value;
+  if (!name || !addr || !mob) {
+    alert("Please fill all details.");
     return;
   }
 
-  const items = [];
-  const inputs = document.querySelectorAll('#menu input[type="number"]');
-  inputs.forEach(input => {
-    const qty = parseFloat(input.value || 0);
-    if (qty > 0) {
-      items.push({
-        name: input.dataset.name,
-        qty: qty,
-        price: parseFloat(input.dataset.price)
-      });
+  let orderDetails = `*Order from Annapurna Kitchen*%0A`;
+  menuData.forEach((item, i) => {
+    const c = document.getElementById('chk' + i);
+    const q = document.getElementById('qty' + i);
+    if (c && c.checked) {
+      orderDetails += `${item.name} x ${q.value} = ₹${item.price * q.value}%0A`;
     }
   });
+  orderDetails += `*Total:* ₹${total}%0A`;
+  orderDetails += `*Name:* ${name}%0A*Address:* ${addr}%0A*Mobile:* ${mob}%0A`;
+  orderDetails += `*Please share payment screenshot as well.*`;
 
-  if (items.length === 0) {
-    alert("Select at least one item.");
-    return;
-  }
+  const waURL = `https://wa.me/919766448463?text=${orderDetails}`;
+  window.location.href = waURL;
 
-  const orderData = {
-    action: 'order',
-    customer: { name, mobile },
-    items: items
-  };
+  // fallback
+  document.getElementById('fallback').style.display = 'block';
+  document.getElementById('fallbackText').value = decodeURIComponent(orderDetails.replace(/%0A/g, '\n'));
+});
 
-  try {
-    const response = await fetch(SHEET_URL, {
-      method: 'POST',
-      body: JSON.stringify(orderData),
-      headers: { 'Content-Type': 'application/json' }
-    });
-    const result = await response.json();
-    logDebug("Order response: " + JSON.stringify(result));
-
-    if (result.status === 'success') {
-      document.getElementById('status').innerText = 'Order submitted! Order ID: ' + result.orderId;
-    } else {
-      document.getElementById('status').innerText = 'Order failed: ' + result.message;
-    }
-  } catch (err) {
-    document.getElementById('status').innerText = 'Error submitting order.';
-    logDebug("Submit error: " + err.message);
-  }
+function copyFallback() {
+  const textarea = document.getElementById('fallbackText');
+  textarea.select();
+  document.execCommand('copy');
+  alert("Copied! Please paste in WhatsApp chat.");
 }
-
-fetchMenu();

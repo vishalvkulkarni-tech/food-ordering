@@ -1,0 +1,13 @@
+{
+  "config": {
+    "LIVE": "TRUE",
+    "TELE_BOT": "FALSE",
+    "BOTID": "",
+    "CHATID": ""
+  },
+  "menu": [
+    { "name": "Sabudana Ladoo (6 pcs)", "price": "250", "available": "true" },
+    { "name": "Upwas Thali", "price": "120", "available": "true" },
+    { "name": "Farali Pattice", "price": "60", "available": "false" }
+  ]
+}
