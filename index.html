@@ -2,113 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Food Ordering Demo</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 500px;
-      margin: 30px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-    h2 {
-      text-align: center;
-    }
-    .menu-items {
-      max-height: 200px;
-      overflow-y: auto;
-      margin-bottom: 15px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      padding: 10px;
-    }
-    .menu-items label {
-      display: block;
-      margin-bottom: 10px;
-    }
-    .total {
-      font-weight: bold;
-      margin-top: 15px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      background: green;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    button:disabled {
-      background: gray;
-      cursor: not-allowed;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Food Order</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <h2>Order Your Food</h2>
-    <div class="menu-items" id="menu-items">
-      <label><input type="checkbox" value="10" onchange="updateTotal()" /> Vada Pav - ₹10</label>
-      <label><input type="checkbox" value="15" onchange="updateTotal()" /> Samosa - ₹15</label>
-      <label><input type="checkbox" value="20" onchange="updateTotal()" /> Poha - ₹20</label>
-      <label><input type="checkbox" value="25" onchange="updateTotal()" /> Misal Pav - ₹25</label>
-      <label><input type="checkbox" value="30" onchange="updateTotal()" /> Upma - ₹30</label>
+    <h1>Food Menu</h1>
+    <div class="menu" id="menu">
+      <!-- Items will be inserted by script.js -->
     </div>
 
-    <div class="total">Total: ₹<span id="total">0</span></div>
+    <h2>Total: ₹<span id="total">0</span></h2>
 
-    <div style="margin: 20px 0; text-align: center;">
-      <a id="paymentLink" href="#" target="_blank">
-        <button id="payNowBtn" onclick="startPayment()">Pay Now</button>
-      </a>
-    </div>
-
-    <button id="submitOrder" disabled onclick="submitOrder()">Submit Order</button>
+    <button id="payButton">Pay via UPI</button>
+    <div id="qrContainer"></div>
   </div>
 
-  <script>
-    let total = 0;
-    let paid = false;
-
-    function updateTotal() {
-      const checkboxes = document.querySelectorAll('#menu-items input[type=checkbox]');
-      total = 0;
-      checkboxes.forEach(cb => {
-        if (cb.checked) total += parseInt(cb.value);
-      });
-      document.getElementById('total').innerText = total;
-      document.getElementById('payNowBtn').disabled = total === 0;
-    }
-
-    function startPayment() {
-      const upiLink = `upi://pay?pa=9766448463@apl&pn=FoodOrder&cu=INR&am=${total}`;
-      const encoded = encodeURI(upiLink);
-      document.getElementById("paymentLink").href = encoded;
-      alert("Please complete payment via your UPI app and then click Submit Order.");
-      paid = true; // NOTE: We assume payment is made for demo; real validation needed in production
-      document.getElementById("submitOrder").disabled = false;
-    }
-
-    function submitOrder() {
-      const items = [];
-      const checkboxes = document.querySelectorAll('#menu-items input[type=checkbox]');
-      checkboxes.forEach(cb => {
-        if (cb.checked) items.push(cb.parentElement.innerText);
-      });
-      const msg = `New Order:\nItems: ${items.join(", ")}\nTotal: ₹${total}`;
-      const whatsappURL = `https://wa.me/919766448463?text=${encodeURIComponent(msg)}`;
-      window.open(whatsappURL, '_blank');
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
