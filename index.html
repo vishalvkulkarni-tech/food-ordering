@@ -1,110 +1,145 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Food Order App</title>
+  <title>Food Order</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 700px; margin: auto; }
-    h1 { text-align: center; }
-    .menu-item { display: flex; justify-content: space-between; padding: 10px 0; }
-    .menu-item input { width: 60px; }
-    .hidden { display: none; }
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    h2 { color: #007bff; }
+    label { display: block; margin: 10px 0 5px; }
+    .item-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .item-row input[type="number"] { width: 60px; }
+    .total { font-weight: bold; margin-top: 10px; }
+    .disabled { color: gray; }
   </style>
 </head>
 <body>
-  <h1>Food Order</h1>
-  <form id="orderForm">
-    <div id="menuSection"></div>
-    <hr/>
-    <label>Name: <input name="name" required /></label><br/><br/>
-    <label>Phone: <input name="phone" required /></label><br/><br/>
-    <label>Address: <textarea name="address" required></textarea></label><br/><br/>
-    <label>Upload Payment Screenshot: <input type="file" id="paymentImg" required /></label><br/><br/>
-    <button type="submit">Submit Order</button>
-  </form>
+  <h2>Order Your Food</h2>
+  <div id="menu"></div>
+
+  <div class="total">Total: ₹<span id="total">0</span></div>
+
+  <h3>Your Details</h3>
+  <label>Name:</label>
+  <input type="text" id="name" required />
+  <label>Phone:</label>
+  <input type="text" id="phone" required />
+  <label>Address:</label>
+  <textarea id="address" rows="2"></textarea>
+
+  <h3>UPI Payment</h3>
+  <img id="qr" src="https://via.placeholder.com/200x200.png?text=Scan+to+Pay" alt="QR Code" width="200" />
+
+  <br><br>
+  <button onclick="submitOrder()">Submit Order</button>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec';
+    const sheetURL = 'https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec';
+    let config = {};
+    let menuItems = [];
 
-    let CONFIG = {};
-    let MENU = [];
-
-    async function fetchData() {
-      const res = await fetch(scriptURL + '?action=config');
-      const data = await res.json();
-      CONFIG = data.config;
-      MENU = data.menu;
-      if (CONFIG.LIVE === 'TRUE') buildMenu();
-      else document.getElementById('orderForm').innerHTML = '<h3>Ordering is currently closed.</h3>';
+    function fetchConfigAndMenu() {
+      fetch(sheetURL + '?action=config')
+        .then(res => res.json())
+        .then(data => {
+          config = data;
+          if (config.LIVE !== 'TRUE') {
+            document.body.innerHTML = '<h2>Ordering is currently closed.</h2>';
+            return;
+          }
+          fetchMenu();
+        });
     }
 
-    function buildMenu() {
-      const menuDiv = document.getElementById('menuSection');
-      MENU.forEach((item, index) => {
-        if (item.Available === 'TRUE') {
-          const div = document.createElement('div');
-          div.className = 'menu-item';
-          div.innerHTML = `
-            <label>${item.Name} (₹${item.Price})</label>
-            <input type="number" name="qty_${index}" min="0" placeholder="Qty" />
-          `;
-          menuDiv.appendChild(div);
-        }
+    function fetchMenu() {
+      fetch(sheetURL + '?action=menu')
+        .then(res => res.json())
+        .then(data => {
+          menuItems = data;
+          renderMenu();
+        });
+    }
+
+    function renderMenu() {
+      const menuDiv = document.getElementById('menu');
+      menuItems.forEach((item, i) => {
+        const isAvailable = item.Available === 'TRUE';
+        const row = document.createElement('div');
+        row.className = 'item-row' + (isAvailable ? '' : ' disabled');
+        row.innerHTML = `
+          <label>
+            <input type="checkbox" ${!isAvailable ? 'disabled' : ''} onchange="toggleItem(${i}, this)">
+            ${item.Item} — ₹${item.Price}
+          </label>
+          <input type="number" id="qty-${i}" value="1" min="1" onchange="updateTotal()" disabled />
+        `;
+        menuDiv.appendChild(row);
       });
     }
 
-    document.getElementById('orderForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    function toggleItem(index, checkbox) {
+      const qtyInput = document.getElementById('qty-' + index);
+      qtyInput.disabled = !checkbox.checked;
+      updateTotal();
+    }
 
-      const form = e.target;
-      const formData = new FormData(form);
-      const menuOrdered = [];
+    function updateTotal() {
       let total = 0;
-
-      MENU.forEach((item, i) => {
-        const qty = parseInt(formData.get(`qty_${i}`)) || 0;
-        if (qty > 0) {
-          menuOrdered.push(`${qty} x ${item.Name}`);
+      menuItems.forEach((item, i) => {
+        const qtyInput = document.getElementById('qty-' + i);
+        const checkbox = qtyInput?.previousElementSibling?.querySelector('input[type="checkbox"]');
+        if (checkbox && checkbox.checked) {
+          const qty = parseInt(qtyInput.value) || 0;
           total += qty * parseFloat(item.Price);
         }
       });
+      document.getElementById('total').innerText = total.toFixed(2);
+    }
 
-      if (menuOrdered.length === 0) return alert("Please select at least 1 item.");
+    function submitOrder() {
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const address = document.getElementById('address').value.trim();
+      if (!name || !phone) {
+        alert('Please enter your name and phone number.');
+        return;
+      }
 
-      const paymentFile = document.getElementById('paymentImg').files[0];
-      if (!paymentFile) return alert("Please upload payment screenshot.");
-
-      const base64 = await toBase64(paymentFile);
-
-      const postData = {
-        name: formData.get("name"),
-        phone: formData.get("phone"),
-        address: formData.get("address"),
-        menuSummary: menuOrdered.join(", "),
-        total,
-        paymentBase64: base64
-      };
-
-      const res = await fetch(scriptURL, {
-        method: 'POST',
-        body: JSON.stringify(postData)
+      const selectedItems = [];
+      menuItems.forEach((item, i) => {
+        const checkbox = document.getElementById('qty-' + i).previousElementSibling.querySelector('input[type="checkbox"]');
+        if (checkbox && checkbox.checked) {
+          const qty = parseInt(document.getElementById('qty-' + i).value) || 1;
+          selectedItems.push(`${item.Item} x ${qty}`);
+        }
       });
 
-      const result = await res.json();
-      if (result.status === 'SUCCESS') alert("Order submitted!");
-      else alert("Error: " + result.message);
-      form.reset();
-    });
+      if (selectedItems.length === 0) {
+        alert('Please select at least one item.');
+        return;
+      }
 
-    const toBase64 = file => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+      const order = {
+        name,
+        phone,
+        address,
+        items: selectedItems.join(', '),
+        total: document.getElementById('total').innerText,
+      };
 
-    fetchData();
+      fetch(sheetURL, {
+        method: 'POST',
+        body: JSON.stringify(order),
+        headers: { 'Content-Type': 'application/json' }
+      })
+      .then(res => res.text())
+      .then(response => {
+        alert('Order placed successfully!');
+        location.reload();
+      })
+      .catch(() => alert('Failed to place order.'));
+    }
+
+    fetchConfigAndMenu();
   </script>
 </body>
 </html>
