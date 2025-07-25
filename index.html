@@ -2,112 +2,109 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Order Food</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Food Order App</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    .item-row { display: flex; justify-content: space-between; margin: 5px 0; }
-    .item-row input[type='number'] { width: 50px; }
-    .section { margin-bottom: 20px; }
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 700px; margin: auto; }
+    h1 { text-align: center; }
+    .menu-item { display: flex; justify-content: space-between; padding: 10px 0; }
+    .menu-item input { width: 60px; }
     .hidden { display: none; }
   </style>
 </head>
 <body>
-  <h2>Menu</h2>
-  <div id="menu"></div>
-
-  <div class="section">
-    <h3>Customer Info</h3>
-    <input type="text" id="name" placeholder="Your Name" required><br><br>
-    <input type="text" id="phone" placeholder="Phone" required><br><br>
-    <textarea id="address" placeholder="Delivery Address"></textarea>
-  </div>
-
-  <div class="section">
-    <h3>Payment</h3>
-    <label><input type="radio" name="paymode" value="Cash" checked> Cash</label>
-    <label><input type="radio" name="paymode" value="Online"> Online</label>
-  </div>
-
-  <div class="section">
-    <strong>Total: ₹<span id="total">0</span></strong>
-    <br><br>
-    <button onclick="submitOrder()">Submit Order</button>
-  </div>
-
-  <div id="message" class="section"></div>
+  <h1>Food Order</h1>
+  <form id="orderForm">
+    <div id="menuSection"></div>
+    <hr/>
+    <label>Name: <input name="name" required /></label><br/><br/>
+    <label>Phone: <input name="phone" required /></label><br/><br/>
+    <label>Address: <textarea name="address" required></textarea></label><br/><br/>
+    <label>Upload Payment Screenshot: <input type="file" id="paymentImg" required /></label><br/><br/>
+    <button type="submit">Submit Order</button>
+  </form>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec";
-    let menuItems = [];
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec';
 
-    async function loadMenu() {
-      const res = await fetch(scriptURL + '?action=menu');
+    let CONFIG = {};
+    let MENU = [];
+
+    async function fetchData() {
+      const res = await fetch(scriptURL + '?action=config');
       const data = await res.json();
-      if (!data.live) {
-        document.body.innerHTML = '<h2>Ordering is currently closed.</h2>';
-        return;
-      }
-      menuItems = data.menu;
-      const menuDiv = document.getElementById("menu");
-      menuItems.forEach((item, i) => {
-        const div = document.createElement("div");
-        div.className = "item-row";
-        div.innerHTML = `
-          <span>${item.name} - ₹${item.price}</span>
-          <input type="number" id="qty-${i}" min="0" value="0" onchange="calculateTotal()">
-        `;
-        menuDiv.appendChild(div);
+      CONFIG = data.config;
+      MENU = data.menu;
+      if (CONFIG.LIVE === 'TRUE') buildMenu();
+      else document.getElementById('orderForm').innerHTML = '<h3>Ordering is currently closed.</h3>';
+    }
+
+    function buildMenu() {
+      const menuDiv = document.getElementById('menuSection');
+      MENU.forEach((item, index) => {
+        if (item.Available === 'TRUE') {
+          const div = document.createElement('div');
+          div.className = 'menu-item';
+          div.innerHTML = `
+            <label>${item.Name} (₹${item.Price})</label>
+            <input type="number" name="qty_${index}" min="0" placeholder="Qty" />
+          `;
+          menuDiv.appendChild(div);
+        }
       });
     }
 
-    function calculateTotal() {
-      let total = 0;
-      menuItems.forEach((item, i) => {
-        const qty = parseInt(document.getElementById(`qty-${i}`).value || 0);
-        total += qty * item.price;
-      });
-      document.getElementById("total").innerText = total;
-    }
+    document.getElementById('orderForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-    async function submitOrder() {
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const address = document.getElementById("address").value.trim();
-      const paymode = document.querySelector("input[name='paymode']:checked").value;
-
-      if (!name || !phone) return alert("Please fill in Name and Phone");
-
-      let orderItems = [];
+      const form = e.target;
+      const formData = new FormData(form);
+      const menuOrdered = [];
       let total = 0;
 
-      menuItems.forEach((item, i) => {
-        const qty = parseInt(document.getElementById(`qty-${i}`).value || 0);
+      MENU.forEach((item, i) => {
+        const qty = parseInt(formData.get(`qty_${i}`)) || 0;
         if (qty > 0) {
-          orderItems.push(`${item.name} x${qty}`);
-          total += qty * item.price;
+          menuOrdered.push(`${qty} x ${item.Name}`);
+          total += qty * parseFloat(item.Price);
         }
       });
 
-      if (orderItems.length === 0) return alert("Please select at least one item.");
+      if (menuOrdered.length === 0) return alert("Please select at least 1 item.");
 
-      const payload = {
-        action: 'order',
-        name, phone, address, paymode,
-        items: orderItems.join(", "),
-        amount: total,
+      const paymentFile = document.getElementById('paymentImg').files[0];
+      if (!paymentFile) return alert("Please upload payment screenshot.");
+
+      const base64 = await toBase64(paymentFile);
+
+      const postData = {
+        name: formData.get("name"),
+        phone: formData.get("phone"),
+        address: formData.get("address"),
+        menuSummary: menuOrdered.join(", "),
+        total,
+        paymentBase64: base64
       };
 
       const res = await fetch(scriptURL, {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(postData)
       });
 
       const result = await res.json();
-      document.getElementById("message").innerHTML = `<strong>${result.message}</strong>`;
-    }
+      if (result.status === 'SUCCESS') alert("Order submitted!");
+      else alert("Error: " + result.message);
+      form.reset();
+    });
 
-    loadMenu();
+    const toBase64 = file => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    fetchData();
   </script>
 </body>
 </html>
