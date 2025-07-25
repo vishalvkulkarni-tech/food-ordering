@@ -1,137 +1,176 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Food Order</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sabudana Laddoo Ordering</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 10px; }
-    h2 { color: #333; }
-    .menu-item { margin-bottom: 10px; }
-    .menu-container { max-height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; }
-    .total { font-weight: bold; margin-top: 15px; }
-    .upi-box { margin-top: 20px; text-align: center; }
-    .upi-box img { max-width: 200px; }
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 1rem; }
+    h1 { color: #333; text-align: center; }
+    label { display: block; margin-top: 1rem; font-weight: bold; }
+    input[type="text"], input[type="number"] { width: 100%; padding: 0.5rem; margin-top: 0.25rem; }
+    button { padding: 0.6rem 1rem; margin-top: 1rem; cursor: pointer; }
+    #bill, #qrcode-container, #payment-confirmed, #payButton { display: none; }
+    .menu-item { margin: 0.5rem 0; }
   </style>
 </head>
 <body>
-  <h2>Menu</h2>
-  <form id="orderForm">
-    <div class="menu-container" id="menuList">Loading menu...</div>
-    <div class="total" id="totalPrice">Total: ₹0</div>
-    <h3>Your Details</h3>
-    <input type="text" name="name" placeholder="Name" required /><br/><br/>
-    <input type="text" name="mobile" placeholder="Mobile" required /><br/><br/>
-    <input type="text" name="address" placeholder="Address" required /><br/><br/>
-    <button type="submit">Place Order</button>
-  </form>
+  <h1>Order Sabudana Laddoos</h1>
 
-  <div class="upi-box">
-    <h3>Pay via UPI</h3>
-    <p>Scan & Pay to <strong>Vishal Kulkarni</strong></p>
-    <img src="https://upi-qr-code-image-link.com/upi-qr.jpg" alt="UPI QR Code" />
-    <p>UPI ID: <strong>vishalkulkarni24@oksbi</strong></p>
+  <div id="menuSection">
+    <h3>Menu</h3>
+    <div id="menuList"></div>
+  </div>
+
+  <label>Name
+    <input type="text" id="customerName" placeholder="Your full name" required />
+  </label>
+  <label>Address
+    <input type="text" id="customerAddress" placeholder="Delivery address" required />
+  </label>
+  <label>Phone Number
+    <input type="text" id="customerPhone" placeholder="10-digit mobile" required />
+  </label>
+
+  <div id="bill"></div>
+  <button id="payButton">Click to Pay</button>
+
+  <div id="qrcode-container">
+    <p id="qrText"></p>
+    <img id="upiQR" width="200" />
+  </div>
+
+  <div id="payment-confirmed">
+    <button onclick="submitOrder()">✅ I Have Completed Payment</button>
   </div>
 
   <script>
-    let menu = [];
-    let config = {};
-    let menuContainer = document.getElementById('menuList');
-    let totalBox = document.getElementById('totalPrice');
+    const menuTab = 'Menu';
+    const orderTab = 'Orders';
+    const configTab = 'Config';
+    const SHEET_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec'; // Replace with your Apps Script URL
 
-    async function fetchMenu() {
-      const res = await fetch('https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec?type=menu');
-      const data = await res.json();
-      menu = data.menu || [];
-      config = data.config || {};
-      renderMenu();
+    let CONFIG = {
+      LIVE: false,
+      TELEGRAM_BOT: false,
+      BOT_TOKEN: '',
+      CHATID: ''
+    };
+
+    let menuItems = [];
+    let totalAmount = 0;
+
+    window.onload = async () => {
+      await fetchConfig();
+      await fetchMenu();
+    };
+
+    async function fetchConfig() {
+      const res = await fetch(`${SHEET_SCRIPT_URL}?mode=config`);
+      const json = await res.json();
+      CONFIG.LIVE = json.LIVE === 'TRUE';
+      CONFIG.TELEGRAM_BOT = json.TELEGRAM_BOT === 'TRUE';
+      CONFIG.BOT_TOKEN = json.BOT_TOKEN;
+      CONFIG.CHATID = json.CHATID;
     }
 
-    function renderMenu() {
-      if (config.LIVE !== 'TRUE') {
-        menuContainer.innerHTML = '<p>Currently not accepting orders.</p>';
+    async function fetchMenu() {
+      const res = await fetch(`${SHEET_SCRIPT_URL}?mode=menu`);
+      const json = await res.json();
+      menuItems = json.filter(item => item.Available === 'TRUE');
+      renderMenu(menuItems);
+    }
+
+    function renderMenu(items) {
+      const menuList = document.getElementById('menuList');
+      menuList.innerHTML = '';
+      items.forEach((item, i) => {
+        const div = document.createElement('div');
+        div.className = 'menu-item';
+        div.innerHTML = `
+          <input type="checkbox" id="item${i}" onchange="updateBill()"> ${item.Item} - ₹${item.Price}
+          <input type="number" id="qty${i}" min="1" value="1" style="width:60px;" disabled>
+        `;
+        menuList.appendChild(div);
+
+        document.getElementById(`item${i}`).addEventListener('change', (e) => {
+          document.getElementById(`qty${i}`).disabled = !e.target.checked;
+        });
+      });
+    }
+
+    function updateBill() {
+      totalAmount = 0;
+      let billText = '<h3>Bill Summary</h3>';
+      menuItems.forEach((item, i) => {
+        const checked = document.getElementById(`item${i}`).checked;
+        if (checked) {
+          const qty = parseInt(document.getElementById(`qty${i}`).value) || 1;
+          const amt = qty * parseFloat(item.Price);
+          totalAmount += amt;
+          billText += `<div>${item.Item} x ${qty} = ₹${amt}</div>`;
+        }
+      });
+      document.getElementById('bill').innerHTML = billText + `<h3>Total: ₹${totalAmount}</h3>`;
+      document.getElementById('bill').style.display = totalAmount > 0 ? 'block' : 'none';
+      document.getElementById('payButton').style.display = totalAmount > 0 ? 'inline-block' : 'none';
+    }
+
+    document.getElementById('payButton').onclick = () => {
+      const upi = 'vishalkulkarni258-2@oksbi';
+      const name = 'Vishal Kulkarni';
+      const url = `https://upiqr.in/api/qr?name=${encodeURIComponent(name)}&vpa=${upi}&amount=${totalAmount}`;
+      document.getElementById('upiQR').src = url;
+      document.getElementById('qrText').innerText = `Scan & Pay ₹${totalAmount} to ${upi}`;
+      document.getElementById('qrcode-container').style.display = 'block';
+      document.getElementById('payButton').style.display = 'none';
+      setTimeout(() => {
+        document.getElementById('payment-confirmed').style.display = 'block';
+      }, 30000); // 30 seconds
+    };
+
+    async function submitOrder() {
+      const name = document.getElementById('customerName').value;
+      const address = document.getElementById('customerAddress').value;
+      const phone = document.getElementById('customerPhone').value;
+      if (!name || !address || !phone || totalAmount === 0) {
+        alert('Please fill all details and select menu.');
         return;
       }
 
-      menuContainer.innerHTML = '';
-      menu.forEach((item, idx) => {
-        if (item.Available !== 'TRUE') return;
-        let div = document.createElement('div');
-        div.className = 'menu-item';
-        div.innerHTML = `
-          <input type="checkbox" data-index="${idx}" />
-          ${item.Item} - ₹${item.Price}
-          Qty: <input type="number" min="1" value="1" data-qty-index="${idx}" style="width:50px;" disabled />
-        `;
-        menuContainer.appendChild(div);
-      });
-
-      menuContainer.querySelectorAll('input[type="checkbox"]').forEach(chk => {
-        chk.addEventListener('change', updateTotal);
-      });
-
-      menuContainer.querySelectorAll('input[type="number"]').forEach(qty => {
-        qty.addEventListener('input', updateTotal);
-      });
-
-      // Toggle qty box
-      menuContainer.addEventListener('change', e => {
-        if (e.target.type === 'checkbox') {
-          const idx = e.target.getAttribute('data-index');
-          const qtyInput = menuContainer.querySelector(`input[data-qty-index="${idx}"]`);
-          qtyInput.disabled = !e.target.checked;
+      let orderItems = [];
+      menuItems.forEach((item, i) => {
+        if (document.getElementById(`item${i}`).checked) {
+          const qty = parseInt(document.getElementById(`qty${i}`).value);
+          orderItems.push(`${item.Item} x ${qty}`);
         }
       });
-    }
-
-    function updateTotal() {
-      let total = 0;
-      menuContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(chk => {
-        let idx = chk.getAttribute('data-index');
-        let qty = parseInt(menuContainer.querySelector(`input[data-qty-index="${idx}"]`).value) || 1;
-        total += parseInt(menu[idx].Price) * qty;
-      });
-      totalBox.innerText = `Total: ₹${total}`;
-    }
-
-    document.getElementById('orderForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      let form = e.target;
-      let items = [];
-      let total = 0;
-
-      menuContainer.querySelectorAll('input[type="checkbox"]:checked').forEach(chk => {
-        let idx = chk.getAttribute('data-index');
-        let qty = parseInt(menuContainer.querySelector(`input[data-qty-index="${idx}"]`).value) || 1;
-        items.push(`${menu[idx].Item} x${qty}`);
-        total += parseInt(menu[idx].Price) * qty;
-      });
-
-      if (!items.length) return alert('Please select at least one item.');
 
       const payload = {
-        name: form.name.value,
-        mobile: form.mobile.value,
-        address: form.address.value,
-        items: items.join(', '),
-        total: total
+        name, address, phone,
+        order: orderItems.join(', '),
+        amount: totalAmount
       };
 
-      const res = await fetch('https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
+      const params = new URLSearchParams(payload).toString();
+      const response = await fetch(`${SHEET_SCRIPT_URL}?mode=submit&${params}`);
 
-      const result = await res.json();
-      if (result.status === 'success') {
-        alert('Order placed!');
-        form.reset();
-        updateTotal();
-      } else {
-        alert('Error placing order.');
+      if (CONFIG.TELEGRAM_BOT) {
+        const tgMessage = `🧾 *New Order Received*\n👤 Name: ${name}\n📍 Address: ${address}\n📞 Phone: ${phone}\n🍴 Order: ${orderItems.join(', ')}\n💵 Amount: ₹${totalAmount}`;
+        fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: CONFIG.CHATID,
+            text: tgMessage,
+            parse_mode: 'Markdown'
+          })
+        });
       }
-    });
 
-    fetchMenu();
+      alert('Thank you! Your order has been placed.');
+      location.reload();
+    }
   </script>
 </body>
 </html>
