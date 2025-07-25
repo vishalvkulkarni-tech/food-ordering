@@ -1,176 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sabudana Laddoo Ordering</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 1rem; }
-    h1 { color: #333; text-align: center; }
-    label { display: block; margin-top: 1rem; font-weight: bold; }
-    input[type="text"], input[type="number"] { width: 100%; padding: 0.5rem; margin-top: 0.25rem; }
-    button { padding: 0.6rem 1rem; margin-top: 1rem; cursor: pointer; }
-    #bill, #qrcode-container, #payment-confirmed, #payButton { display: none; }
-    .menu-item { margin: 0.5rem 0; }
-  </style>
-</head>
-<body>
-  <h1>Order Sabudana Laddoos</h1>
+<html>
+  <head>
+    <base target="_top" />
+    <script>
+      let config = {};
+      let menu = [];
 
-  <div id="menuSection">
-    <h3>Menu</h3>
-    <div id="menuList"></div>
-  </div>
-
-  <label>Name
-    <input type="text" id="customerName" placeholder="Your full name" required />
-  </label>
-  <label>Address
-    <input type="text" id="customerAddress" placeholder="Delivery address" required />
-  </label>
-  <label>Phone Number
-    <input type="text" id="customerPhone" placeholder="10-digit mobile" required />
-  </label>
-
-  <div id="bill"></div>
-  <button id="payButton">Click to Pay</button>
-
-  <div id="qrcode-container">
-    <p id="qrText"></p>
-    <img id="upiQR" width="200" />
-  </div>
-
-  <div id="payment-confirmed">
-    <button onclick="submitOrder()">✅ I Have Completed Payment</button>
-  </div>
-
-  <script>
-    const menuTab = 'Menu';
-    const orderTab = 'Orders';
-    const configTab = 'Config';
-    const SHEET_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec'; // Replace with your Apps Script URL
-
-    let CONFIG = {
-      LIVE: false,
-      TELEGRAM_BOT: false,
-      BOT_TOKEN: '',
-      CHATID: ''
-    };
-
-    let menuItems = [];
-    let totalAmount = 0;
-
-    window.onload = async () => {
-      await fetchConfig();
-      await fetchMenu();
-    };
-
-    async function fetchConfig() {
-      const res = await fetch(`${SHEET_SCRIPT_URL}?mode=config`);
-      const json = await res.json();
-      CONFIG.LIVE = json.LIVE === 'TRUE';
-      CONFIG.TELEGRAM_BOT = json.TELEGRAM_BOT === 'TRUE';
-      CONFIG.BOT_TOKEN = json.BOT_TOKEN;
-      CONFIG.CHATID = json.CHATID;
-    }
-
-    async function fetchMenu() {
-      const res = await fetch(`${SHEET_SCRIPT_URL}?mode=menu`);
-      const json = await res.json();
-      menuItems = json.filter(item => item.Available === 'TRUE');
-      renderMenu(menuItems);
-    }
-
-    function renderMenu(items) {
-      const menuList = document.getElementById('menuList');
-      menuList.innerHTML = '';
-      items.forEach((item, i) => {
-        const div = document.createElement('div');
-        div.className = 'menu-item';
-        div.innerHTML = `
-          <input type="checkbox" id="item${i}" onchange="updateBill()"> ${item.Item} - ₹${item.Price}
-          <input type="number" id="qty${i}" min="1" value="1" style="width:60px;" disabled>
-        `;
-        menuList.appendChild(div);
-
-        document.getElementById(`item${i}`).addEventListener('change', (e) => {
-          document.getElementById(`qty${i}`).disabled = !e.target.checked;
-        });
-      });
-    }
-
-    function updateBill() {
-      totalAmount = 0;
-      let billText = '<h3>Bill Summary</h3>';
-      menuItems.forEach((item, i) => {
-        const checked = document.getElementById(`item${i}`).checked;
-        if (checked) {
-          const qty = parseInt(document.getElementById(`qty${i}`).value) || 1;
-          const amt = qty * parseFloat(item.Price);
-          totalAmount += amt;
-          billText += `<div>${item.Item} x ${qty} = ₹${amt}</div>`;
-        }
-      });
-      document.getElementById('bill').innerHTML = billText + `<h3>Total: ₹${totalAmount}</h3>`;
-      document.getElementById('bill').style.display = totalAmount > 0 ? 'block' : 'none';
-      document.getElementById('payButton').style.display = totalAmount > 0 ? 'inline-block' : 'none';
-    }
-
-    document.getElementById('payButton').onclick = () => {
-      const upi = 'vishalkulkarni258-2@oksbi';
-      const name = 'Vishal Kulkarni';
-      const url = `https://upiqr.in/api/qr?name=${encodeURIComponent(name)}&vpa=${upi}&amount=${totalAmount}`;
-      document.getElementById('upiQR').src = url;
-      document.getElementById('qrText').innerText = `Scan & Pay ₹${totalAmount} to ${upi}`;
-      document.getElementById('qrcode-container').style.display = 'block';
-      document.getElementById('payButton').style.display = 'none';
-      setTimeout(() => {
-        document.getElementById('payment-confirmed').style.display = 'block';
-      }, 30000); // 30 seconds
-    };
-
-    async function submitOrder() {
-      const name = document.getElementById('customerName').value;
-      const address = document.getElementById('customerAddress').value;
-      const phone = document.getElementById('customerPhone').value;
-      if (!name || !address || !phone || totalAmount === 0) {
-        alert('Please fill all details and select menu.');
-        return;
-      }
-
-      let orderItems = [];
-      menuItems.forEach((item, i) => {
-        if (document.getElementById(`item${i}`).checked) {
-          const qty = parseInt(document.getElementById(`qty${i}`).value);
-          orderItems.push(`${item.Item} x ${qty}`);
-        }
-      });
-
-      const payload = {
-        name, address, phone,
-        order: orderItems.join(', '),
-        amount: totalAmount
+      window.onload = async () => {
+        const response = await google.script.run.withSuccessHandler(init).getData;
       };
 
-      const params = new URLSearchParams(payload).toString();
-      const response = await fetch(`${SHEET_SCRIPT_URL}?mode=submit&${params}`);
+      function init(data) {
+        config = data.config;
+        menu = data.menu;
+        renderMenu();
+        document.getElementById("userForm").style.display = config.LIVE ? "block" : "none";
+      }
 
-      if (CONFIG.TELEGRAM_BOT) {
-        const tgMessage = `🧾 *New Order Received*\n👤 Name: ${name}\n📍 Address: ${address}\n📞 Phone: ${phone}\n🍴 Order: ${orderItems.join(', ')}\n💵 Amount: ₹${totalAmount}`;
-        fetch(`https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: CONFIG.CHATID,
-            text: tgMessage,
-            parse_mode: 'Markdown'
-          })
+      function renderMenu() {
+        const menuContainer = document.getElementById("menuContainer");
+        menu.forEach((item, index) => {
+          const div = document.createElement("div");
+          div.innerHTML = `
+            <label>
+              <input type="checkbox" onchange="updateTotal()" data-price="${item.Price}" value="${item.Item}" />
+              ${item.Item} - ₹${item.Price}
+            </label>`;
+          menuContainer.appendChild(div);
         });
       }
 
-      alert('Thank you! Your order has been placed.');
-      location.reload();
-    }
-  </script>
-</body>
+      function updateTotal() {
+        let total = 0;
+        document.querySelectorAll("#menuContainer input[type=checkbox]:checked").forEach(cb => {
+          total += parseFloat(cb.dataset.price);
+        });
+        document.getElementById("totalAmount").innerText = total;
+        document.getElementById("paymentButton").style.display = total > 0 ? "block" : "none";
+        document.getElementById("qrSection").style.display = "none";
+      }
+
+      function generateQR() {
+        const amount = document.getElementById("totalAmount").innerText;
+        if (!amount || amount == 0) return;
+        const upi = config.UPI_ID;
+        const name = config.UPI_NAME;
+        const url = `https://upi-qr-code.vercel.app/api/qr?upi=${upi}&name=${name}&amount=${amount}`;
+        document.getElementById("qrCode").src = url;
+        document.getElementById("qrSection").style.display = "block";
+        document.getElementById("paymentButton").style.display = "none";
+
+        setTimeout(() => {
+          document.getElementById("confirmPayment").style.display = "block";
+        }, 30000);
+      }
+
+      function submitOrder() {
+        const selectedItems = Array.from(document.querySelectorAll("#menuContainer input[type=checkbox]:checked"))
+          .map(cb => cb.value);
+        const total = document.getElementById("totalAmount").innerText;
+        const name = document.getElementById("name").value;
+        const phone = document.getElementById("phone").value;
+
+        if (!name || !phone || selectedItems.length === 0) {
+          alert("Please complete all details and select items.");
+          return;
+        }
+
+        const order = {
+          name,
+          phone,
+          items: selectedItems,
+          total
+        };
+
+        google.script.run.withSuccessHandler(() => {
+          alert("Order submitted successfully!");
+          window.location.reload();
+        }).submitOrder(order);
+      }
+    </script>
+  </head>
+  <body>
+    <h2>Menu</h2>
+    <div id="menuContainer"></div>
+    <h3>Total: ₹<span id="totalAmount">0</span></h3>
+    <button id="paymentButton" style="display:none;" onclick="generateQR()">Click here to Pay</button>
+
+    <div id="qrSection" style="display:none;">
+      <h3>Scan to Pay</h3>
+      <img id="qrCode" src="" width="200" />
+      <br />
+      <button id="confirmPayment" style="display:none;" onclick="submitOrder()">I have paid</button>
+    </div>
+
+    <div id="userForm" style="margin-top:20px;">
+      <h3>Your Info</h3>
+      <label>Name: <input type="text" id="name" /></label><br />
+      <label>Phone: <input type="text" id="phone" /></label>
+    </div>
+  </body>
 </html>
+
