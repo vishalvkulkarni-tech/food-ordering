@@ -1,104 +1,134 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <base target="_top" />
-    <script>
-      let config = {};
-      let menu = [];
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Annapurna Kitchen - Order</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+  <script>
+    let menuData = [];
+    let selectedItems = [];
+    let totalAmount = 0;
 
-      window.onload = async () => {
-        const response = await google.script.run.withSuccessHandler(init).getData;
-      };
-
-      function init(data) {
-        config = data.config;
-        menu = data.menu;
-        renderMenu();
-        document.getElementById("userForm").style.display = config.LIVE ? "block" : "none";
-      }
-
-      function renderMenu() {
-        const menuContainer = document.getElementById("menuContainer");
-        menu.forEach((item, index) => {
-          const div = document.createElement("div");
-          div.innerHTML = `
-            <label>
-              <input type="checkbox" onchange="updateTotal()" data-price="${item.Price}" value="${item.Item}" />
-              ${item.Item} - ₹${item.Price}
-            </label>`;
-          menuContainer.appendChild(div);
-        });
-      }
-
-      function updateTotal() {
-        let total = 0;
-        document.querySelectorAll("#menuContainer input[type=checkbox]:checked").forEach(cb => {
-          total += parseFloat(cb.dataset.price);
-        });
-        document.getElementById("totalAmount").innerText = total;
-        document.getElementById("paymentButton").style.display = total > 0 ? "block" : "none";
-        document.getElementById("qrSection").style.display = "none";
-      }
-
-      function generateQR() {
-        const amount = document.getElementById("totalAmount").innerText;
-        if (!amount || amount == 0) return;
-        const upi = config.UPI_ID;
-        const name = config.UPI_NAME;
-        const url = `https://upi-qr-code.vercel.app/api/qr?upi=${upi}&name=${name}&amount=${amount}`;
-        document.getElementById("qrCode").src = url;
-        document.getElementById("qrSection").style.display = "block";
-        document.getElementById("paymentButton").style.display = "none";
-
-        setTimeout(() => {
-          document.getElementById("confirmPayment").style.display = "block";
-        }, 30000);
-      }
-
-      function submitOrder() {
-        const selectedItems = Array.from(document.querySelectorAll("#menuContainer input[type=checkbox]:checked"))
-          .map(cb => cb.value);
-        const total = document.getElementById("totalAmount").innerText;
-        const name = document.getElementById("name").value;
-        const phone = document.getElementById("phone").value;
-
-        if (!name || !phone || selectedItems.length === 0) {
-          alert("Please complete all details and select items.");
-          return;
+    async function fetchMenu() {
+      try {
+        const res = await fetch('https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec?action=menu');
+        const data = await res.json();
+        if (data.success) {
+          menuData = data.menu.filter(item => item.available);
+          displayMenu();
+        } else {
+          alert('Failed to load menu');
         }
-
-        const order = {
-          name,
-          phone,
-          items: selectedItems,
-          total
-        };
-
-        google.script.run.withSuccessHandler(() => {
-          alert("Order submitted successfully!");
-          window.location.reload();
-        }).submitOrder(order);
+      } catch (error) {
+        alert('Error fetching menu');
       }
-    </script>
-  </head>
-  <body>
-    <h2>Menu</h2>
-    <div id="menuContainer"></div>
-    <h3>Total: ₹<span id="totalAmount">0</span></h3>
-    <button id="paymentButton" style="display:none;" onclick="generateQR()">Click here to Pay</button>
+    }
 
-    <div id="qrSection" style="display:none;">
-      <h3>Scan to Pay</h3>
-      <img id="qrCode" src="" width="200" />
-      <br />
-      <button id="confirmPayment" style="display:none;" onclick="submitOrder()">I have paid</button>
+    function displayMenu() {
+      const menuContainer = document.getElementById('menu-items');
+      menuContainer.innerHTML = '';
+      menuData.forEach((item, index) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between mb-2';
+        row.innerHTML = `
+          <label class="flex items-center">
+            <input type="checkbox" class="mr-2" onchange="updateTotal(${index}, this.checked)">
+            ${item.name} (₹${item.price})
+          </label>
+        `;
+        menuContainer.appendChild(row);
+      });
+    }
+
+    function updateTotal(index, checked) {
+      const item = menuData[index];
+      if (checked) {
+        selectedItems.push(item);
+        totalAmount += parseInt(item.price);
+      } else {
+        selectedItems = selectedItems.filter(i => i.name !== item.name);
+        totalAmount -= parseInt(item.price);
+      }
+      document.getElementById('total').textContent = 'Total: ₹' + totalAmount;
+      document.getElementById('pay-now-btn').style.display = totalAmount > 0 ? 'block' : 'none';
+    }
+
+    function generateQRCode() {
+      const upiID = '9766448463@apl';
+      const name = 'Annapurna Kitchen';
+      const note = 'Food Order';
+      const amount = totalAmount.toFixed(2);
+      const qrData = `upi://pay?pa=${upiID}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+      new QRious({
+        element: document.getElementById('qrcode'),
+        value: qrData,
+        size: 200
+      });
+      document.getElementById('payment-section').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('payment-done-btn').style.display = 'block';
+      }, 30000);
+    }
+
+    async function submitOrder() {
+      const name = document.getElementById('user-name').value;
+      const contact = document.getElementById('user-contact').value;
+      if (!name || !contact || selectedItems.length === 0) {
+        alert('Please complete all fields and select at least one menu item.');
+        return;
+      }
+      const payload = {
+        name,
+        contact,
+        items: selectedItems.map(i => i.name).join(', '),
+        amount: totalAmount
+      };
+      try {
+        const res = await fetch('https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?action=submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Order submitted successfully!');
+          location.reload();
+        } else {
+          alert('Failed to submit order');
+        }
+      } catch (error) {
+        alert('Error submitting order');
+      }
+    }
+
+    window.onload = fetchMenu;
+  </script>
+</head>
+<body class="bg-gray-100 p-4">
+  <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-xl font-bold mb-4 text-center">Annapurna Kitchen Order Form</h1>
+
+    <div id="menu-items" class="mb-4"></div>
+    <div id="total" class="font-bold mb-4">Total: ₹0</div>
+
+    <button id="pay-now-btn" onclick="generateQRCode()" class="bg-green-600 text-white px-4 py-2 rounded mb-4 hidden">Click Here to Pay</button>
+
+    <div id="payment-section" style="display: none;" class="mb-4 text-center">
+      <p class="mb-2 font-semibold">Scan to Pay via UPI</p>
+      <canvas id="qrcode"></canvas>
+      <button id="payment-done-btn" onclick="submitOrder()" class="bg-blue-600 text-white px-4 py-2 rounded mt-4 hidden">I have completed the payment</button>
     </div>
 
-    <div id="userForm" style="margin-top:20px;">
-      <h3>Your Info</h3>
-      <label>Name: <input type="text" id="name" /></label><br />
-      <label>Phone: <input type="text" id="phone" /></label>
+    <div class="mb-4">
+      <label class="block font-medium">Your Name</label>
+      <input type="text" id="user-name" class="w-full border border-gray-300 rounded p-2">
     </div>
-  </body>
+    <div class="mb-4">
+      <label class="block font-medium">Contact Number</label>
+      <input type="text" id="user-contact" class="w-full border border-gray-300 rounded p-2">
+    </div>
+  </div>
+</body>
 </html>
-
