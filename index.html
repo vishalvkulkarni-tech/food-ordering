@@ -3,22 +3,108 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Food Order</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Annapurna Kitchen - Food Order</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fdf6f0;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #c0392b;
+    }
+    .menu-container {
+      max-height: 250px;
+      overflow-y: scroll;
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+    }
+    .menu-item {
+      margin: 8px 0;
+    }
+    #total {
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+    #qrContainer {
+      margin-top: 20px;
+      text-align: center;
+    }
+    button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    button:disabled {
+      background-color: #ccc;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Food Menu</h1>
-    <div class="menu" id="menu">
-      <!-- Items will be inserted by script.js -->
-    </div>
 
-    <h2>Total: ₹<span id="total">0</span></h2>
+  <h1>Annapurna Kitchen</h1>
 
-    <button id="payButton">Pay via UPI</button>
-    <div id="qrContainer"></div>
+  <div class="menu-container" id="menu">
+    <div class="menu-item"><input type="checkbox" data-price="80"> Sabudana Khichdi – ₹80</div>
+    <div class="menu-item"><input type="checkbox" data-price="100"> Puran Poli – ₹100</div>
+    <div class="menu-item"><input type="checkbox" data-price="60"> Batata Bhaji – ₹60</div>
+    <div class="menu-item"><input type="checkbox" data-price="120"> Masale Bhaat – ₹120</div>
+    <div class="menu-item"><input type="checkbox" data-price="90"> Kothimbir Vadi – ₹90</div>
+    <div class="menu-item"><input type="checkbox" data-price="70"> Sheera – ₹70</div>
+    <div class="menu-item"><input type="checkbox" data-price="150"> Combo Meal – ₹150</div>
   </div>
 
-  <script src="script.js"></script>
+  <div id="total">Total: ₹0</div>
+
+  <button onclick="generateQRCode()">Pay via UPI</button>
+  <div id="qrContainer"></div>
+
+  <button id="placeOrderBtn" disabled>Place Order</button>
+
+  <script>
+    const checkboxes = document.querySelectorAll('.menu-item input');
+    const totalDisplay = document.getElementById('total');
+    let total = 0;
+
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        const price = parseFloat(cb.getAttribute('data-price'));
+        total += cb.checked ? price : -price;
+        totalDisplay.innerText = `Total: ₹${total}`;
+      });
+    });
+
+    function generateQRCode() {
+      if (total <= 0) {
+        alert('Please select at least one item.');
+        return;
+      }
+
+      const upiID = '9766448463@apl';
+      const name = 'Janhavi - Annapurna Kitchen';
+      const upiURL = `upi://pay?pa=${upiID}&pn=${encodeURIComponent(name)}&am=${total}&cu=INR`;
+      const qrAPI = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiURL)}`;
+
+      const qrContainer = document.getElementById('qrContainer');
+      qrContainer.innerHTML = `
+        <h3>Scan to Pay</h3>
+        <img src="${qrAPI}" alt="UPI QR Code" />
+        <p>UPI ID: ${upiID}</p>
+      `;
+
+      document.getElementById('placeOrderBtn').disabled = false;
+    }
+  </script>
+
 </body>
 </html>
