@@ -1,29 +1,120 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Food Order</title>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <title>Food Ordering App</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    .item { display: flex; justify-content: space-between; padding: 8px 0; }
-    input[type="number"] { width: 50px; }
-    #menu { max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
-    #status, #debug { margin-top: 15px; color: red; white-space: pre-wrap; font-size: 14px; }
+    body { font-family: Arial; margin: 20px; }
+    .item { margin-bottom: 10px; }
+    .item input { width: 40px; }
+    .debug { background: #f0f0f0; padding: 10px; font-size: 12px; margin-top: 20px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
-  <h2>Annapurna Kitchen Menu</h2>
-  <div id="menu">Loading menu...</div>
 
-  <h3>Customer Info</h3>
-  <label>Name: <input type="text" id="custName" required></label><br>
-  <label>Mobile: <input type="tel" id="custMobile" required></label><br><br>
+  <h2>Menu</h2>
+  <div id="menuContainer">Loading menu...</div>
 
   <h3>Total: ₹<span id="total">0</span></h3>
-  <button onclick="submitOrder()">Submit Order</button>
-  <div id="status"></div>
-  <div id="debug"></div>
 
-  <script src="script.js"></script>
+  <h3>Your Info</h3>
+  <form id="orderForm">
+    Name: <input type="text" name="name" required><br><br>
+    Phone: <input type="text" name="phone" required><br><br>
+    <button type="submit">Place Order</button>
+  </form>
+
+  <div id="result"></div>
+  <div class="debug" id="debugLog">Debug log will appear here...</div>
+
+  <script>
+    const sheetURL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';  // Replace with your actual Web App URL
+    const debug = (msg) => {
+      const log = document.getElementById("debugLog");
+      log.innerText += msg + "\n";
+    };
+
+    let menuItems = [];
+
+    function calculateTotal() {
+      let total = 0;
+      document.querySelectorAll(".qty").forEach((input, i) => {
+        const qty = parseInt(input.value) || 0;
+        const price = parseFloat(menuItems[i]?.price) || 0;
+        total += qty * price;
+      });
+      document.getElementById("total").textContent = total;
+    }
+
+    async function fetchMenu() {
+      debug("Fetching menu from Google Sheet...");
+      try {
+        const url = sheetURL + '?action=menu';
+        const res = await fetch(url);
+        const data = await res.json();
+        debug("Menu data received: " + JSON.stringify(data));
+        if (!Array.isArray(data)) throw new Error("Invalid menu format");
+        menuItems = data;
+        const menuDiv = document.getElementById("menuContainer");
+        menuDiv.innerHTML = '';
+        data.forEach((item, i) => {
+          const row = document.createElement("div");
+          row.className = "item";
+          row.innerHTML = `
+            ${item.name} - ₹${item.price}
+            <input type="number" class="qty" min="0" value="0" data-index="${i}">
+          `;
+          menuDiv.appendChild(row);
+        });
+
+        document.querySelectorAll(".qty").forEach(input => {
+          input.addEventListener("input", calculateTotal);
+        });
+
+      } catch (err) {
+        debug("Menu fetch error: " + err.message);
+        document.getElementById("menuContainer").innerText = "Failed to load menu.";
+      }
+    }
+
+    document.getElementById("orderForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const name = this.name.value;
+      const phone = this.phone.value;
+      const order = [];
+
+      document.querySelectorAll(".qty").forEach((input, i) => {
+        const qty = parseInt(input.value);
+        if (qty > 0) {
+          order.push({ name: menuItems[i].name, price: menuItems[i].price, qty });
+        }
+      });
+
+      const payload = {
+        action: "order",
+        name, phone,
+        order: JSON.stringify(order),
+        total: parseFloat(document.getElementById("total").textContent)
+      };
+
+      debug("Submitting order: " + JSON.stringify(payload));
+
+      try {
+        const res = await fetch(sheetURL, {
+          method: "POST",
+          body: new URLSearchParams(payload),
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        });
+        const result = await res.text();
+        debug("Order response: " + result);
+        document.getElementById("result").innerText = "Order placed successfully!";
+      } catch (err) {
+        debug("Order submission error: " + err.message);
+        document.getElementById("result").innerText = "Error placing order.";
+      }
+    });
+
+    fetchMenu();
+  </script>
 </body>
 </html>
