@@ -1,98 +1,163 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Annapurna Kitchen</title>
+  <title>Annapurna Kitchen Order</title>
   <style>
-    body { font-family: sans-serif; padding: 1em; }
-    h2 { color: #444; }
-    label, input, textarea, select { display: block; margin-bottom: 10px; width: 100%; max-width: 400px; }
-    input, textarea, select { padding: 6px; }
-    table { width: 100%; max-width: 600px; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    button { padding: 10px 20px; margin-top: 10px; }
-    .upi-container img { max-width: 200px; margin-bottom: 10px; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background-color: #fff9f2;
+      color: #333;
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    form {
+      max-width: 600px;
+      margin: auto;
+      background: #fff3e6;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    label, input, select, textarea {
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+    input, select, textarea {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .total {
+      font-weight: bold;
+      margin-top: 1rem;
+      text-align: right;
+    }
+    button {
+      width: 100%;
+      padding: 0.8rem;
+      background-color: #ffa726;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    #status {
+      text-align: center;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    img.qr {
+      display: block;
+      margin: 1rem auto;
+      max-width: 250px;
+    }
   </style>
 </head>
 <body>
-  <h2>Welcome to Annapurna Kitchen</h2>
-
-  <div class="upi-container">
-    <p>Pay using UPI ID: <strong>9766448463@apl</strong></p>
-    <img src="https://api.qrserver.com/v1/create-qr-code/?data=upi://pay?pa=9766448463@apl&pn=Janhavi%20-%20Annapurna%20Kitchen&am=1&cu=INR" alt="UPI QR Code" />
-  </div>
+  <h1>Annapurna Kitchen</h1>
+  <h2>Place Your Order</h2>
 
   <form id="orderForm">
-    <label for="name">Name:</label>
-    <input type="text" id="name" name="name" required />
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" required>
 
-    <label for="mobile">Mobile Number:</label>
-    <input type="tel" id="mobile" name="mobile" required />
+    <label for="address">Delivery Address</label>
+    <textarea id="address" name="address" required></textarea>
 
-    <label for="address">Address:</label>
-    <textarea id="address" name="address" rows="2" required></textarea>
+    <label for="mobile">Mobile Number</label>
+    <input type="tel" id="mobile" name="mobile" required pattern="[0-9]{10}" maxlength="10">
 
-    <h3>Menu</h3>
-    <table>
-      <thead>
-        <tr><th>Item</th><th>Price</th><th>Qty</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>Sabudana Ladoo (6 pcs)</td><td>₹1</td><td><input type="number" min="0" value="0" name="ladoo" /></td></tr>
-        <tr><td>Besan Ladoo (6 pcs)</td><td>₹2</td><td><input type="number" min="0" value="0" name="besan" /></td></tr>
-      </tbody>
-    </table>
+    <div class="menu-item">
+      <label>Sabudana Laddoo (6 pcs) - ₹1</label>
+      <input type="number" name="laddooQty" min="0" value="0">
+    </div>
+    <div class="menu-item">
+      <label>Upvas Thali - ₹2</label>
+      <input type="number" name="thaliQty" min="0" value="0">
+    </div>
+
+    <p class="total">Total: ₹<span id="totalPrice">0</span></p>
+
+    <h3>Scan to Pay</h3>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?data=upi://pay?pa=9766448463@apl&pn=Janhavi%20-%20Annapurna%20Kitchen&am=0&cu=INR" class="qr" id="qrCode">
+    <p style="text-align:center">UPI: 9766448463@apl</p>
 
     <button type="submit">Submit Order</button>
+    <p id="status"></p>
   </form>
 
   <script>
-    const sheetUrl = 'https://script.google.com/macros/s/PASTE_YOUR_DEPLOYED_SCRIPT_URL_HERE/exec';
-    const telegramBotToken = 'PASTE_YOUR_BOT_TOKEN'; // comment for now
-    const telegramChatId = 'PASTE_YOUR_CHAT_ID'; // comment for now
+    const form = document.getElementById("orderForm");
+    const totalPriceSpan = document.getElementById("totalPrice");
+    const qr = document.getElementById("qrCode");
+    const status = document.getElementById("status");
 
-    document.getElementById('orderForm').addEventListener('submit', async function (e) {
+    const PRICES = { laddoo: 1, thali: 2 };
+
+    form.addEventListener("input", () => {
+      const laddooQty = parseInt(form.laddooQty.value || 0);
+      const thaliQty = parseInt(form.thaliQty.value || 0);
+      const total = laddooQty * PRICES.laddoo + thaliQty * PRICES.thali;
+      totalPriceSpan.textContent = total;
+
+      qr.src = `https://api.qrserver.com/v1/create-qr-code/?data=upi://pay?pa=9766448463@apl&pn=Janhavi%20-%20Annapurna%20Kitchen&am=${total}&cu=INR`;
+    });
+
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-
-      const name = document.getElementById('name').value;
-      const mobile = document.getElementById('mobile').value;
-      const address = document.getElementById('address').value;
-      const ladoo = parseInt(document.querySelector('[name="ladoo"]').value || '0');
-      const besan = parseInt(document.querySelector('[name="besan"]').value || '0');
-
-      const total = ladoo * 1 + besan * 2;
+      status.textContent = "Submitting order...";
 
       const data = {
-        name, mobile, address, ladoo, besan, total
+        name: form.name.value,
+        address: form.address.value,
+        mobile: form.mobile.value,
+        laddooQty: form.laddooQty.value,
+        thaliQty: form.thaliQty.value,
+        total: totalPriceSpan.textContent,
+        paid: "Manual Confirmation"
       };
 
       try {
-        const response = await fetch(sheetUrl, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify(data)
         });
 
-        alert('Order submitted! Please confirm payment manually.');
-        document.getElementById('orderForm').reset();
+        const result = await response.text();
+        status.textContent = "Order placed successfully!";
 
-        // Telegram notification (optional)
+        // Telegram bot notification placeholder
         /*
-        await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const botToken = "<YOUR_BOT_TOKEN>";
+        const chatId = "<YOUR_CHAT_ID>";
+        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json'
+          },
           body: JSON.stringify({
-            chat_id: telegramChatId,
-            text: `New Order:\nName: ${name}\nMobile: ${mobile}\nItems: Sabudana Ladoo: ${ladoo}, Besan Ladoo: ${besan}\nTotal: ₹${total}`
+            chat_id: chatId,
+            text: `New Order Received:\nName: ${data.name}\nMobile: ${data.mobile}\nThali: ${data.thaliQty}, Laddoo: ${data.laddooQty}\nTotal: ₹${data.total}`
           })
         });
         */
-
       } catch (err) {
-        alert('There was an error submitting your order.');
+        status.textContent = "Failed to place order. Try again.";
+        console.error(err);
       }
     });
   </script>
