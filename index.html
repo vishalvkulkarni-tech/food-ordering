@@ -1,136 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Annapurna Kitchen Order</title>
+  <title>Food Order</title>
+  <meta charset="UTF-8" />
   <style>
-    body { font-family: Arial, sans-serif; padding: 10px; max-width: 600px; margin: auto; }
-    .item-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-    .item-name { flex: 2; }
-    .item-price { flex: 1; text-align: right; }
-    .item-qty { flex: 1; text-align: right; }
-    .total-box, .upi-box, .form-section { margin-top: 15px; }
-    input[type="number"] { width: 60px; }
-    input[type="text"], input[type="tel"] { width: 100%; padding: 5px; margin-bottom: 10px; }
-    button { padding: 8px 12px; background-color: green; color: white; border: none; cursor: pointer; }
-    #debugLog { white-space: pre-wrap; background-color: #eee; padding: 8px; font-size: 12px; max-height: 200px; overflow-y: scroll; }
+    body { font-family: Arial; padding: 20px; }
+    .item { display: flex; justify-content: space-between; padding: 8px 0; }
+    input[type="number"] { width: 50px; }
+    #menu { max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    #status, #debug { margin-top: 15px; color: red; white-space: pre-wrap; font-size: 14px; }
   </style>
 </head>
 <body>
+  <h2>Annapurna Kitchen Menu</h2>
+  <div id="menu">Loading menu...</div>
 
-<h2>Annapurna Kitchen</h2>
-<p>📞 Janhavi: <a href="tel:9766448463">9766448463</a> | <b>UPI:</b> <code>9766448463@apl</code></p>
+  <h3>Customer Info</h3>
+  <label>Name: <input type="text" id="custName" required></label><br>
+  <label>Mobile: <input type="tel" id="custMobile" required></label><br><br>
 
-<div id="menuContainer">Loading menu...</div>
+  <h3>Total: ₹<span id="total">0</span></h3>
+  <button onclick="submitOrder()">Submit Order</button>
+  <div id="status"></div>
+  <div id="debug"></div>
 
-<div class="total-box">
-  <strong>Total: ₹<span id="totalAmount">0</span></strong>
-</div>
-
-<div class="upi-box">
-  <p>Scan & Pay:</p>
-  <img src="upi_qr.png" alt="UPI QR" width="200" />
-</div>
-
-<div class="form-section">
-  <h3>Your Details</h3>
-  <input type="text" id="customerName" placeholder="Your Name" required>
-  <input type="tel" id="customerPhone" placeholder="Phone Number" required>
-  <input type="text" id="customerAddress" placeholder="Delivery Address" required>
-  <button onclick="submitOrder()">Place Order</button>
-</div>
-
-<h4>Debug Log:</h4>
-<pre id="debugLog"></pre>
-
-<script>
-const scriptURL = 'https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec?action=menu';
-const debug = (msg) => {
-  const log = document.getElementById('debugLog');
-  log.textContent += msg + "\n";
-  log.scrollTop = log.scrollHeight;
-};
-
-let menuData = [];
-
-function fetchMenu() {
-  debug("Fetching menu from Google Sheet...");
-  fetch(scriptURL + '?menu')
-    .then(res => res.json())
-    .then(data => {
-      debug("Menu data received: " + JSON.stringify(data));
-      menuData = data;
-      renderMenu();
-    })
-    .catch(err => debug("Menu fetch error: " + err));
-}
-
-function renderMenu() {
-  const container = document.getElementById("menuContainer");
-  container.innerHTML = '';
-  menuData.forEach((item, index) => {
-    const row = document.createElement("div");
-    row.className = "item-row";
-    row.innerHTML = `
-      <div class="item-name">${item.name}</div>
-      <div class="item-price">₹${item.price}</div>
-      <div class="item-qty"><input type="number" id="qty${index}" min="0" value="0" onchange="updateTotal()" /></div>
-    `;
-    container.appendChild(row);
-  });
-  updateTotal();
-}
-
-function updateTotal() {
-  let total = 0;
-  menuData.forEach((item, index) => {
-    const qty = parseInt(document.getElementById(`qty${index}`).value || 0);
-    total += qty * parseFloat(item.price);
-  });
-  document.getElementById("totalAmount").textContent = total.toFixed(2);
-  debug("Total updated to ₹" + total.toFixed(2));
-}
-
-function submitOrder() {
-  const name = document.getElementById("customerName").value;
-  const phone = document.getElementById("customerPhone").value;
-  const address = document.getElementById("customerAddress").value;
-  const orderItems = [];
-
-  menuData.forEach((item, index) => {
-    const qty = parseInt(document.getElementById(`qty${index}`).value || 0);
-    if (qty > 0) {
-      orderItems.push(`${item.name} x${qty}`);
-    }
-  });
-
-  if (!name || !phone || !address || orderItems.length === 0) {
-    debug("Please fill all fields and select at least one item.");
-    return;
-  }
-
-  const payload = {
-    order: JSON.stringify({
-      name,
-      phone,
-      address,
-      items: orderItems.join(", "),
-      total: document.getElementById("totalAmount").textContent
-    })
-  };
-
-  debug("Sending order payload: " + JSON.stringify(payload));
-  fetch(scriptURL + '?order', {
-    method: 'POST',
-    body: new URLSearchParams(payload)
-  })
-  .then(res => res.text())
-  .then(result => debug("Server response: " + result))
-  .catch(err => debug("Error submitting order: " + err));
-}
-
-fetchMenu();
-</script>
-
+  <script src="script.js"></script>
 </body>
 </html>
