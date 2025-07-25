@@ -1,134 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Annapurna Kitchen - Order</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
-  <script>
-    let menuData = [];
-    let selectedItems = [];
-    let totalAmount = 0;
-
-    async function fetchMenu() {
-      try {
-        const res = await fetch('https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec?action=menu');
-        const data = await res.json();
-        if (data.success) {
-          menuData = data.menu.filter(item => item.available);
-          displayMenu();
-        } else {
-          alert('Failed to load menu');
-        }
-      } catch (error) {
-        alert('Error fetching menu');
-      }
-    }
-
-    function displayMenu() {
-      const menuContainer = document.getElementById('menu-items');
-      menuContainer.innerHTML = '';
-      menuData.forEach((item, index) => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center justify-between mb-2';
-        row.innerHTML = `
-          <label class="flex items-center">
-            <input type="checkbox" class="mr-2" onchange="updateTotal(${index}, this.checked)">
-            ${item.name} (₹${item.price})
-          </label>
-        `;
-        menuContainer.appendChild(row);
-      });
-    }
-
-    function updateTotal(index, checked) {
-      const item = menuData[index];
-      if (checked) {
-        selectedItems.push(item);
-        totalAmount += parseInt(item.price);
-      } else {
-        selectedItems = selectedItems.filter(i => i.name !== item.name);
-        totalAmount -= parseInt(item.price);
-      }
-      document.getElementById('total').textContent = 'Total: ₹' + totalAmount;
-      document.getElementById('pay-now-btn').style.display = totalAmount > 0 ? 'block' : 'none';
-    }
-
-    function generateQRCode() {
-      const upiID = '9766448463@apl';
-      const name = 'Annapurna Kitchen';
-      const note = 'Food Order';
-      const amount = totalAmount.toFixed(2);
-      const qrData = `upi://pay?pa=${upiID}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
-      new QRious({
-        element: document.getElementById('qrcode'),
-        value: qrData,
-        size: 200
-      });
-      document.getElementById('payment-section').style.display = 'block';
-      setTimeout(() => {
-        document.getElementById('payment-done-btn').style.display = 'block';
-      }, 30000);
-    }
-
-    async function submitOrder() {
-      const name = document.getElementById('user-name').value;
-      const contact = document.getElementById('user-contact').value;
-      if (!name || !contact || selectedItems.length === 0) {
-        alert('Please complete all fields and select at least one menu item.');
-        return;
-      }
-      const payload = {
-        name,
-        contact,
-        items: selectedItems.map(i => i.name).join(', '),
-        amount: totalAmount
-      };
-      try {
-        const res = await fetch('https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec?action=submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (data.success) {
-          alert('Order submitted successfully!');
-          location.reload();
-        } else {
-          alert('Failed to submit order');
-        }
-      } catch (error) {
-        alert('Error submitting order');
-      }
-    }
-
-    window.onload = fetchMenu;
-  </script>
+  <meta charset="UTF-8">
+  <title>Annapurna Kitchen Order</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 10px; max-width: 600px; margin: auto; }
+    .item-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .item-name { flex: 2; }
+    .item-price { flex: 1; text-align: right; }
+    .item-qty { flex: 1; text-align: right; }
+    .total-box, .upi-box, .form-section { margin-top: 15px; }
+    input[type="number"] { width: 60px; }
+    input[type="text"], input[type="tel"] { width: 100%; padding: 5px; margin-bottom: 10px; }
+    button { padding: 8px 12px; background-color: green; color: white; border: none; cursor: pointer; }
+    #debugLog { white-space: pre-wrap; background-color: #eee; padding: 8px; font-size: 12px; max-height: 200px; overflow-y: scroll; }
+  </style>
 </head>
-<body class="bg-gray-100 p-4">
-  <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-xl font-bold mb-4 text-center">Annapurna Kitchen Order Form</h1>
+<body>
 
-    <div id="menu-items" class="mb-4"></div>
-    <div id="total" class="font-bold mb-4">Total: ₹0</div>
+<h2>Annapurna Kitchen</h2>
+<p>📞 Janhavi: <a href="tel:9766448463">9766448463</a> | <b>UPI:</b> <code>9766448463@apl</code></p>
 
-    <button id="pay-now-btn" onclick="generateQRCode()" class="bg-green-600 text-white px-4 py-2 rounded mb-4 hidden">Click Here to Pay</button>
+<div id="menuContainer">Loading menu...</div>
 
-    <div id="payment-section" style="display: none;" class="mb-4 text-center">
-      <p class="mb-2 font-semibold">Scan to Pay via UPI</p>
-      <canvas id="qrcode"></canvas>
-      <button id="payment-done-btn" onclick="submitOrder()" class="bg-blue-600 text-white px-4 py-2 rounded mt-4 hidden">I have completed the payment</button>
-    </div>
+<div class="total-box">
+  <strong>Total: ₹<span id="totalAmount">0</span></strong>
+</div>
 
-    <div class="mb-4">
-      <label class="block font-medium">Your Name</label>
-      <input type="text" id="user-name" class="w-full border border-gray-300 rounded p-2">
-    </div>
-    <div class="mb-4">
-      <label class="block font-medium">Contact Number</label>
-      <input type="text" id="user-contact" class="w-full border border-gray-300 rounded p-2">
-    </div>
-  </div>
+<div class="upi-box">
+  <p>Scan & Pay:</p>
+  <img src="upi_qr.png" alt="UPI QR" width="200" />
+</div>
+
+<div class="form-section">
+  <h3>Your Details</h3>
+  <input type="text" id="customerName" placeholder="Your Name" required>
+  <input type="tel" id="customerPhone" placeholder="Phone Number" required>
+  <input type="text" id="customerAddress" placeholder="Delivery Address" required>
+  <button onclick="submitOrder()">Place Order</button>
+</div>
+
+<h4>Debug Log:</h4>
+<pre id="debugLog"></pre>
+
+<script>
+const scriptURL = 'https://script.google.com/macros/s/AKfycbwgfbXBfU3MDUDUb4gPelPPJ1_52phISM-zZ_hT1QNGSRYH2zmbH4AZTJjuL6cEW6q6LA/exec';
+const debug = (msg) => {
+  const log = document.getElementById('debugLog');
+  log.textContent += msg + "\n";
+  log.scrollTop = log.scrollHeight;
+};
+
+let menuData = [];
+
+function fetchMenu() {
+  debug("Fetching menu from Google Sheet...");
+  fetch(scriptURL + '?menu')
+    .then(res => res.json())
+    .then(data => {
+      debug("Menu data received: " + JSON.stringify(data));
+      menuData = data;
+      renderMenu();
+    })
+    .catch(err => debug("Menu fetch error: " + err));
+}
+
+function renderMenu() {
+  const container = document.getElementById("menuContainer");
+  container.innerHTML = '';
+  menuData.forEach((item, index) => {
+    const row = document.createElement("div");
+    row.className = "item-row";
+    row.innerHTML = `
+      <div class="item-name">${item.name}</div>
+      <div class="item-price">₹${item.price}</div>
+      <div class="item-qty"><input type="number" id="qty${index}" min="0" value="0" onchange="updateTotal()" /></div>
+    `;
+    container.appendChild(row);
+  });
+  updateTotal();
+}
+
+function updateTotal() {
+  let total = 0;
+  menuData.forEach((item, index) => {
+    const qty = parseInt(document.getElementById(`qty${index}`).value || 0);
+    total += qty * parseFloat(item.price);
+  });
+  document.getElementById("totalAmount").textContent = total.toFixed(2);
+  debug("Total updated to ₹" + total.toFixed(2));
+}
+
+function submitOrder() {
+  const name = document.getElementById("customerName").value;
+  const phone = document.getElementById("customerPhone").value;
+  const address = document.getElementById("customerAddress").value;
+  const orderItems = [];
+
+  menuData.forEach((item, index) => {
+    const qty = parseInt(document.getElementById(`qty${index}`).value || 0);
+    if (qty > 0) {
+      orderItems.push(`${item.name} x${qty}`);
+    }
+  });
+
+  if (!name || !phone || !address || orderItems.length === 0) {
+    debug("Please fill all fields and select at least one item.");
+    return;
+  }
+
+  const payload = {
+    order: JSON.stringify({
+      name,
+      phone,
+      address,
+      items: orderItems.join(", "),
+      total: document.getElementById("totalAmount").textContent
+    })
+  };
+
+  debug("Sending order payload: " + JSON.stringify(payload));
+  fetch(scriptURL + '?order', {
+    method: 'POST',
+    body: new URLSearchParams(payload)
+  })
+  .then(res => res.text())
+  .then(result => debug("Server response: " + result))
+  .catch(err => debug("Error submitting order: " + err));
+}
+
+fetchMenu();
+</script>
+
 </body>
 </html>
