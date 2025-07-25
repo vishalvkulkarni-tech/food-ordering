@@ -3,70 +3,112 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Food Order</title>
+  <title>Food Ordering Demo</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; background: #f9f9f9; }
-    h2 { color: #c0392b; }
-    label, input, select, button { display: block; width: 100%; margin-bottom: 10px; }
-    input, select, button { padding: 10px; font-size: 1em; }
-    button { background: #27ae60; color: white; border: none; cursor: pointer; }
-    button:hover { background: #219150; }
-    a.upi { display: inline-block; margin: 15px 0; background: #2980b9; color: white; padding: 10px; text-align: center; text-decoration: none; }
-    a.upi:hover { background: #1f6391; }
-    #orderForm button:disabled { background: #999; cursor: not-allowed; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 30px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+    }
+    .menu-items {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+    }
+    .menu-items label {
+      display: block;
+      margin-bottom: 10px;
+    }
+    .total {
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: green;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: gray;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
-  <h2>Order Food Items</h2>
+  <div class="container">
+    <h2>Order Your Food</h2>
+    <div class="menu-items" id="menu-items">
+      <label><input type="checkbox" value="10" onchange="updateTotal()" /> Vada Pav - ₹10</label>
+      <label><input type="checkbox" value="15" onchange="updateTotal()" /> Samosa - ₹15</label>
+      <label><input type="checkbox" value="20" onchange="updateTotal()" /> Poha - ₹20</label>
+      <label><input type="checkbox" value="25" onchange="updateTotal()" /> Misal Pav - ₹25</label>
+      <label><input type="checkbox" value="30" onchange="updateTotal()" /> Upma - ₹30</label>
+    </div>
 
-  <label for="item">Select Item:</label>
-  <select id="item" onchange="updatePrice()">
-    <option value="1|Sabudana Laddoo">Sabudana Laddoo - ₹1</option>
-    <option value="10|Poha">Poha - ₹10</option>
-    <option value="20|Upma">Upma - ₹20</option>
-    <option value="15|Idli">Idli - ₹15</option>
-  </select>
+    <div class="total">Total: ₹<span id="total">0</span></div>
 
-  <p>Total Price: <strong id="price">₹1</strong></p>
+    <div style="margin: 20px 0; text-align: center;">
+      <a id="paymentLink" href="#" target="_blank">
+        <button id="payNowBtn" onclick="startPayment()">Pay Now</button>
+      </a>
+    </div>
 
-  <a class="upi" id="upiLink" href="upi://pay?pa=9766448463@apl&pn=Vishal%20Kulkarni&am=1&cu=INR" target="_blank">
-    Pay via UPI
-  </a>
-
-  <form id="orderForm" onsubmit="sendOrder(event)">
-    <label for="name">Your Name:</label>
-    <input type="text" id="name" name="name" required />
-
-    <label for="address">Delivery Address:</label>
-    <input type="text" id="address" name="address" required />
-
-    <button type="submit" id="submitBtn" disabled>Submit Order</button>
-  </form>
+    <button id="submitOrder" disabled onclick="submitOrder()">Submit Order</button>
+  </div>
 
   <script>
-    let selectedAmount = 1;
-    let selectedItem = "Sabudana Laddoo";
+    let total = 0;
+    let paid = false;
 
-    function updatePrice() {
-      const [amount, item] = document.getElementById("item").value.split('|');
-      selectedAmount = amount;
-      selectedItem = item;
-      document.getElementById("price").innerText = `₹${amount}`;
-      const upiURL = `upi://pay?pa=9766448463@apl&pn=Vishal%20Kulkarni&am=${amount}&cu=INR`;
-      document.getElementById("upiLink").href = upiURL;
-      document.getElementById("submitBtn").disabled = false;
+    function updateTotal() {
+      const checkboxes = document.querySelectorAll('#menu-items input[type=checkbox]');
+      total = 0;
+      checkboxes.forEach(cb => {
+        if (cb.checked) total += parseInt(cb.value);
+      });
+      document.getElementById('total').innerText = total;
+      document.getElementById('payNowBtn').disabled = total === 0;
     }
 
-    function sendOrder(event) {
-      event.preventDefault();
-      const name = document.getElementById('name').value.trim();
-      const address = document.getElementById('address').value.trim();
-      const msg = `Food Order:\nName: ${name}\nAddress: ${address}\nItem: ${selectedItem}\nAmount: ₹${selectedAmount} (paid)`;
-      const encoded = encodeURIComponent(msg);
-      const whatsappURL = `https://api.callmebot.com/whatsapp.php?phone=+919766448463&text=${encoded}&apikey=free`;
+    function startPayment() {
+      const upiLink = `upi://pay?pa=9766448463@apl&pn=FoodOrder&cu=INR&am=${total}`;
+      const encoded = encodeURI(upiLink);
+      document.getElementById("paymentLink").href = encoded;
+      alert("Please complete payment via your UPI app and then click Submit Order.");
+      paid = true; // NOTE: We assume payment is made for demo; real validation needed in production
+      document.getElementById("submitOrder").disabled = false;
+    }
+
+    function submitOrder() {
+      const items = [];
+      const checkboxes = document.querySelectorAll('#menu-items input[type=checkbox]');
+      checkboxes.forEach(cb => {
+        if (cb.checked) items.push(cb.parentElement.innerText);
+      });
+      const msg = `New Order:\nItems: ${items.join(", ")}\nTotal: ₹${total}`;
+      const whatsappURL = `https://wa.me/919766448463?text=${encodeURIComponent(msg)}`;
       window.open(whatsappURL, '_blank');
     }
   </script>
 </body>
 </html>
-
