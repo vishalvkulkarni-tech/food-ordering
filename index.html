@@ -1,46 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Annapurna Kitchen Order</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Annapurna Kitchen - Order Online</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <h1>Annapurna Kitchen</h1>
-    <div id="menu"></div>
+    <div class="container">
+        <header class="header">
+            <h1 id="site-title">Annapurna Kitchen</h1>
+            <p id="working-hours" class="working-hours">Working Hours: 10 AM - 7 PM</p>
+            <p id="status-message" class="status-message"></p>
+        </header>
 
-    <div id="total-container">
-      <strong>Total: ₹<span id="total">0</span></strong>
+        <div id="closed-message" class="closed-message" style="display: none;">
+            <h2>🍴 Kitchen Closed</h2>
+            <p>Sorry, we are currently closed. Please visit us during our working hours.</p>
+            <p id="closed-working-hours"></p>
+        </div>
+
+        <div id="main-content">
+            <section class="menu-section">
+                <h2>Our Menu</h2>
+                <p id="freshly-cooked-msg" class="info-message">As items are freshly cooked, it will take little time to serve you the authentic taste</p>
+                <div id="menu" class="menu-grid"></div>
+            </section>
+
+            <div class="cart-summary" id="cart-summary" style="display: none;">
+                <h3>Order Summary</h3>
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span>₹<span id="subtotal">0</span></span>
+                </div>
+                <div class="summary-row">
+                    <span>Packaging Charges:</span>
+                    <span>₹<span id="packaging-total">0</span></span>
+                </div>
+                <div class="summary-row">
+                    <span>Convenience Fees:</span>
+                    <span>₹<span id="convenience-fees">0</span></span>
+                </div>
+                <div class="summary-row">
+                    <span>Platform Fees:</span>
+                    <span>₹<span id="platform-fees">0</span></span>
+                </div>
+                <div class="summary-row coupon-discount" id="coupon-discount-row" style="display: none;">
+                    <span>Coupon Discount:</span>
+                    <span>-₹<span id="coupon-discount">0</span></span>
+                </div>
+                <div class="summary-row total-row">
+                    <strong>Total: ₹<span id="total">0</span></strong>
+                </div>
+                <button id="checkout-btn" class="btn-primary">Proceed to Checkout</button>
+            </div>
+
+            <!-- Checkout Page -->
+            <div id="checkout-page" class="checkout-page" style="display: none;">
+                <h2>Checkout</h2>
+
+                <div class="coupon-section">
+                    <h3>Have a Coupon?</h3>
+                    <div class="coupon-input-group">
+                        <input type="text" id="coupon-input" placeholder="Enter coupon code" />
+                        <button id="apply-coupon-btn" class="btn-secondary">Apply</button>
+                    </div>
+                    <div id="coupon-message" class="coupon-message"></div>
+                </div>
+
+                <div class="order-summary-checkout">
+                    <h3>Final Order Summary</h3>
+                    <div id="final-order-items"></div>
+                    <div class="final-summary-rows">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span>₹<span id="final-subtotal">0</span></span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Packaging Charges:</span>
+                            <span>₹<span id="final-packaging">0</span></span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Convenience Fees:</span>
+                            <span>₹<span id="final-convenience">0</span></span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Platform Fees:</span>
+                            <span>₹<span id="final-platform">0</span></span>
+                        </div>
+                        <div class="summary-row" id="final-delivery-row">
+                            <span>Delivery:</span>
+                            <span id="final-delivery">Free for 5km radius</span>
+                        </div>
+                        <div class="summary-row coupon-discount" id="final-coupon-row" style="display: none;">
+                            <span>Coupon Discount:</span>
+                            <span>-₹<span id="final-coupon-discount">0</span></span>
+                        </div>
+                        <div class="summary-row total-row">
+                            <strong>Final Total: ₹<span id="final-total">0</span></strong>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="pay-now-btn" class="btn-primary">Pay Now</button>
+                <button id="back-to-menu-btn" class="btn-secondary">Back to Menu</button>
+            </div>
+
+            <!-- Payment Section -->
+            <div id="payment-section" class="payment-section" style="display: none;">
+                <h2>Payment</h2>
+                <div class="qr-container">
+                    <h3>Scan QR Code to Pay</h3>
+                    <canvas id="qr-code"></canvas>
+                    <p class="payment-amount">Amount: ₹<span id="payment-amount">0</span></p>
+                    <p class="payment-instructions">Scan the QR code with any UPI app to make payment</p>
+                </div>
+
+                <div id="user-details-section" class="user-details" style="display: none;">
+                    <h3>Delivery Details</h3>
+                    <input type="text" id="customer-name" placeholder="Your Name" required />
+                    <textarea id="delivery-address" placeholder="Delivery Address" required></textarea>
+                    <input type="tel" id="customer-mobile" placeholder="Mobile Number" required />
+                    <button id="submit-order-btn" class="btn-primary">Submit Order</button>
+                </div>
+
+                <div id="payment-completion" class="payment-completion" style="display: none;">
+                    <h3>Payment Completed!</h3>
+                    <p id="payment-completion-message">Please share payment screenshot along with menu</p>
+                    <button id="new-order-btn" class="btn-primary">Place New Order</button>
+                </div>
+            </div>
+
+            <!-- Fallback for manual copy -->
+            <div id="fallback-section" class="fallback-section" style="display: none;">
+                <h3>Manual Order (Fallback)</h3>
+                <p>If WhatsApp didn't open automatically, copy the message below:</p>
+                <textarea id="fallback-text" readonly></textarea>
+                <button id="copy-fallback-btn" class="btn-secondary">Copy Message</button>
+                <p>Then paste it in WhatsApp chat with <span id="fallback-mobile">9766448463</span></p>
+            </div>
+        </div>
     </div>
 
-    <button id="payNow">Pay Now</button>
-    <div id="qrSection" style="display:none;">
-      <h3>Scan to Pay</h3>
-      <canvas id="qrcode"></canvas>
-      <p>Waiting for payment...</p>
-    </div>
-
-    <div id="userDetails" style="display:none;">
-      <input type="text" id="name" placeholder="Your Name" />
-      <input type="text" id="address" placeholder="Delivery Address" />
-      <input type="text" id="mobile" placeholder="Mobile Number" />
-      <button id="submitOrder">Submit</button>
-    </div>
-
-    <div id="fallback" style="display:none;">
-      <p>If WhatsApp doesn't open, copy the below message and send manually:</p>
-      <textarea id="fallbackText" rows="6"></textarea>
-      <button onclick="copyFallback()">Copy</button>
-    </div>
-
-    <footer>
-      <p>Contact: Annapurna Kitchen, Janhavi, 9766448463</p>
-    </footer>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/qrious/dist/qrious.min.js"></script>
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
