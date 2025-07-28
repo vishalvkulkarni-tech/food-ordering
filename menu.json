@@ -25,13 +25,6 @@
       "discount_perc": 20,
       "max_discount": 150,
       "min_order_value_for_coupon": 300
-    },
-    {
-      "coupon_code": "FLAT50",
-      "discount_perc": 0,
-      "max_discount": 50,
-      "min_order_value_for_coupon": 250,
-      "fixed_discount": 50
     }
   ],
   "menu": [
@@ -40,119 +33,119 @@
       "price": "89",
       "available": "true",
       "packaging_charge": 5,
-      "image": "puranpoli.jpg"
+      "image": "puranpoli.JPG"
     },
     {
       "name": "Puri Bhaji (4P Puri)",
       "price": "99",
       "available": "true",
       "packaging_charge": 12,
-      "image": "puri_bhaji.jpg"
+      "image": "puribhaji.JPG"
     },
     {
       "name": "Masalebhat (serves 1)",
       "price": "149",
       "available": "true",
       "packaging_charge": 10,
-      "image": "masalebhat.jpg"
+      "image": "masalebhat.JPG"
     },
     {
       "name": "Masalebhat (serves 2/3)",
       "price": "289",
       "available": "true",
       "packaging_charge": 20,
-      "image": "masalebhat_large.jpg"
+      "image": "masalebhat.JPG"
     },
     {
       "name": "Kothimbir Vadi (6P)",
       "price": "59",
       "available": "true",
       "packaging_charge": 5,
-      "image": "kothimbir_vadi.jpg"
+      "image": "kothimbirVadi.JPG"
     },
     {
       "name": "Batata Vada (4P)",
       "price": "99",
       "available": "true",
       "packaging_charge": 15,
-      "image": "batata_vada.jpg"
+      "image": "batatavada.JPG"
     },
     {
       "name": "Fried Modak (11P)",
       "price": "149",
       "available": "true",
       "packaging_charge": 15,
-      "image": "fried_modak.jpg"
+      "image": "friedmodak.JPG"
     },
     {
       "name": "Fried Modak (21P)",
       "price": "249",
       "available": "true",
       "packaging_charge": 25,
-      "image": "fried_modak_large.jpg"
+      "image": "friedmodak.JPG"
     },
     {
       "name": "Besan Ladu (Approx 250gms)",
       "price": "249",
       "available": "true",
       "packaging_charge": 15,
-      "image": "besan_ladu.jpg"
+      "image": "besanLaddo.JPG"
     },
     {
       "name": "Onion Thalipith (2P)",
       "price": "99",
       "available": "true",
       "packaging_charge": 5,
-      "image": "onion_thalipith.jpg"
+      "image": "onionthalipith.JPG"
     },
     {
       "name": "Kothimbir Thalipith (2P)",
       "price": "129",
       "available": "true",
       "packaging_charge": 5,
-      "image": "kothimbir_thalipith.jpg"
+      "image": "koththalipith.JPG"
     },
     {
       "name": "Sabudana Ladu (Approx 250gms)",
       "price": "249",
       "available": "true",
       "packaging_charge": 15,
-      "image": "sabudana_ladu.jpg"
+      "image": "sabudanaLadu.JPG"
     },
     {
       "name": "Shengdana Ladu (Approx 250gms)",
       "price": "299",
       "available": "true",
       "packaging_charge": 15,
-      "image": "shengdana_ladu.jpg"
+      "image": "shengdanaLadu.JPG"
     },
     {
       "name": "Bhagar (serves 1)",
       "price": "149",
       "available": "true",
       "packaging_charge": 10,
-      "image": "bhagar.jpg"
+      "image": "bhagar.JPG"
     },
     {
       "name": "Bhagar (serves 2/3)",
       "price": "289",
       "available": "true",
       "packaging_charge": 20,
-      "image": "bhagar_large.jpg"
+      "image": "bhagar.JPG"
     },
     {
       "name": "Sabudana Khichadi (serves 2)",
       "price": "199",
       "available": "true",
       "packaging_charge": 8,
-      "image": "sabudana_khichadi.jpg"
+      "image": "sabudanKhichdi.JPG"
     },
     {
       "name": "Upwasache Thalipith (2P) + curd",
       "price": "99",
       "available": "true",
       "packaging_charge": 10,
-      "image": "upwasache_thalipith.jpg"
+      "image": "upwasThalipith.JPG"
     }
   ]
 }
