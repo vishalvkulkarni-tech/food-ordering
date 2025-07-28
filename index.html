@@ -3,146 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Annapurna Kitchen - Order Online</title>
+    <title>Annapurna Kitchen - Authentic Homemade Food</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header class="header">
-            <h1 id="site-title">Annapurna Kitchen</h1>
-            <p id="working-hours" class="working-hours">Working Hours: 10 AM - 7 PM</p>
-            <p id="status-message" class="status-message"></p>
-        </header>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="site-title">🍛 Annapurna Kitchen</h1>
+                <div class="header-info">
+                    <span class="working-hours">📞 9766448463 | ⏰ 10 AM - 7 PM</span>
+                    <div class="status-indicator" id="statusIndicator">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
 
-        <div id="closed-message" class="closed-message" style="display: none;">
-            <h2>🍴 Kitchen Closed</h2>
-            <p>Sorry, we are currently closed. Please visit us during our working hours.</p>
-            <p id="closed-working-hours"></p>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Loading delicious menu...</p>
         </div>
 
-        <div id="main-content">
-            <section class="menu-section">
-                <h2>Our Menu</h2>
-                <p id="freshly-cooked-msg" class="info-message">As items are freshly cooked, it will take little time to serve you the authentic taste</p>
-                <div id="menu" class="menu-grid"></div>
-            </section>
-
-            <div class="cart-summary" id="cart-summary" style="display: none;">
-                <h3>Order Summary</h3>
-                <div class="summary-row">
-                    <span>Subtotal:</span>
-                    <span>₹<span id="subtotal">0</span></span>
+        <!-- Kitchen Closed Message -->
+        <div id="closedMessage" class="closed-message hidden">
+            <div class="container">
+                <div class="closed-content">
+                    <h2>🍽️ Kitchen is Currently Closed</h2>
+                    <p>We're open from <strong>10 AM to 7 PM</strong></p>
+                    <p>As items are freshly cooked, it will take little time to serve you the authentic taste</p>
                 </div>
-                <div class="summary-row">
-                    <span>Packaging Charges:</span>
-                    <span>₹<span id="packaging-total">0</span></span>
-                </div>
-                <div class="summary-row">
-                    <span>Convenience Fees:</span>
-                    <span>₹<span id="convenience-fees">0</span></span>
-                </div>
-                <div class="summary-row">
-                    <span>Platform Fees:</span>
-                    <span>₹<span id="platform-fees">0</span></span>
-                </div>
-                <div class="summary-row coupon-discount" id="coupon-discount-row" style="display: none;">
-                    <span>Coupon Discount:</span>
-                    <span>-₹<span id="coupon-discount">0</span></span>
-                </div>
-                <div class="summary-row total-row">
-                    <strong>Total: ₹<span id="total">0</span></strong>
-                </div>
-                <button id="checkout-btn" class="btn-primary">Proceed to Checkout</button>
             </div>
+        </div>
 
-            <!-- Checkout Page -->
-            <div id="checkout-page" class="checkout-page" style="display: none;">
-                <h2>Checkout</h2>
-
-                <div class="coupon-section">
-                    <h3>Have a Coupon?</h3>
-                    <div class="coupon-input-group">
-                        <input type="text" id="coupon-input" placeholder="Enter coupon code" />
-                        <button id="apply-coupon-btn" class="btn-secondary">Apply</button>
-                    </div>
-                    <div id="coupon-message" class="coupon-message"></div>
+        <!-- Menu Section -->
+        <section id="menuSection" class="menu-section hidden">
+            <div class="container">
+                <div class="section-header">
+                    <h2>Our Fresh Menu</h2>
+                    <p>As items are freshly cooked, it will take little time to serve you the authentic taste</p>
                 </div>
+                <div id="menuGrid" class="menu-grid">
+                    <!-- Menu items will be dynamically loaded here -->
+                </div>
+            </div>
+        </section>
 
-                <div class="order-summary-checkout">
-                    <h3>Final Order Summary</h3>
-                    <div id="final-order-items"></div>
-                    <div class="final-summary-rows">
-                        <div class="summary-row">
+        <!-- Cart Summary -->
+        <div id="cartSummary" class="cart-summary hidden">
+            <div class="container">
+                <div class="cart-content">
+                    <div class="cart-header">
+                        <h3>Your Order</h3>
+                        <button id="clearCart" class="btn btn--outline btn--sm">Clear Cart</button>
+                    </div>
+                    <div id="cartItems" class="cart-items">
+                        <!-- Cart items will be displayed here -->
+                    </div>
+                    <div class="cart-totals">
+                        <div class="total-row">
                             <span>Subtotal:</span>
-                            <span>₹<span id="final-subtotal">0</span></span>
+                            <span id="subtotal">₹0</span>
                         </div>
-                        <div class="summary-row">
-                            <span>Packaging Charges:</span>
-                            <span>₹<span id="final-packaging">0</span></span>
+                        <div class="total-row">
+                            <span>Packaging:</span>
+                            <span id="packagingCharges">₹0</span>
                         </div>
-                        <div class="summary-row">
+                        <div class="total-row">
                             <span>Convenience Fees:</span>
-                            <span>₹<span id="final-convenience">0</span></span>
+                            <span>₹0</span>
                         </div>
-                        <div class="summary-row">
+                        <div class="total-row">
                             <span>Platform Fees:</span>
-                            <span>₹<span id="final-platform">0</span></span>
+                            <span>₹0</span>
                         </div>
-                        <div class="summary-row" id="final-delivery-row">
-                            <span>Delivery:</span>
-                            <span id="final-delivery">Free for 5km radius</span>
+                        <div id="discountRow" class="total-row discount-row hidden">
+                            <span>Discount (<span id="appliedCouponCode"></span>):</span>
+                            <span id="discountAmount">-₹0</span>
                         </div>
-                        <div class="summary-row coupon-discount" id="final-coupon-row" style="display: none;">
-                            <span>Coupon Discount:</span>
-                            <span>-₹<span id="final-coupon-discount">0</span></span>
+                        <div class="total-row final-total">
+                            <span>Total:</span>
+                            <span id="finalTotal">₹0</span>
                         </div>
-                        <div class="summary-row total-row">
-                            <strong>Final Total: ₹<span id="final-total">0</span></strong>
+                    </div>
+                    <button id="proceedToCheckout" class="btn btn--primary btn--full-width">Proceed to Checkout</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Checkout</h3>
+                <button id="closeCheckout" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Order Summary -->
+                <div class="checkout-section">
+                    <h4>Order Summary</h4>
+                    <div id="checkoutItems" class="checkout-items">
+                        <!-- Items will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Coupon Section -->
+                <div class="checkout-section">
+                    <h4>Apply Coupon</h4>
+                    <div class="coupon-form">
+                        <input type="text" id="couponInput" class="form-control" placeholder="Enter coupon code" style="display: inline-block; width: calc(100% - 80px); margin-right: 8px;">
+                        <button id="applyCoupon" class="btn btn--secondary" style="display: inline-block; width: 70px;">Apply</button>
+                    </div>
+                    <div id="couponError" class="coupon-error hidden"></div>
+                    <div id="couponSuccess" class="coupon-success hidden"></div>
+                </div>
+
+                <!-- Pricing Summary -->
+                <div class="checkout-section">
+                    <div class="checkout-totals">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span id="checkoutSubtotal">₹0</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Packaging:</span>
+                            <span id="checkoutPackaging">₹0</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Convenience Fees:</span>
+                            <span>₹0</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Platform Fees:</span>
+                            <span>₹0</span>
+                        </div>
+                        <div id="checkoutDiscountRow" class="total-row discount-row hidden">
+                            <span>Discount:</span>
+                            <span id="checkoutDiscountAmount">-₹0</span>
+                        </div>
+                        <div class="total-row final-total">
+                            <span>Total:</span>
+                            <span id="checkoutFinalTotal">₹0</span>
+                        </div>
+                    </div>
+                    <p class="delivery-message">Free for 5km radius, else depends on location sent via parcel services</p>
+                </div>
+
+                <!-- Customer Details -->
+                <div class="checkout-section">
+                    <h4>Customer Details</h4>
+                    <form id="customerForm">
+                        <div class="form-group">
+                            <label class="form-label">Full Name *</label>
+                            <input type="text" id="customerName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mobile Number *</label>
+                            <input type="tel" id="customerMobile" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Complete Address *</label>
+                            <textarea id="customerAddress" class="form-control" rows="3" required></textarea>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Payment Section -->
+                <div id="paymentSection" class="checkout-section hidden">
+                    <h4>Payment</h4>
+                    <div class="payment-content">
+                        <div class="qr-container">
+                            <canvas id="qrCode"></canvas>
+                            <p>Scan QR code to pay ₹<span id="paymentAmount">0</span></p>
+                        </div>
+                        <div class="payment-actions">
+                            <button id="whatsappButton" class="btn btn--primary btn--full-width">
+                                📱 Send Order via WhatsApp
+                            </button>
+                            <button id="copyOrderButton" class="btn btn--outline btn--full-width">
+                                📋 Copy Order Details
+                            </button>
+                        </div>
+                        <div class="payment-note">
+                            <p><strong>Please share payment screenshot along with menu</strong></p>
                         </div>
                     </div>
                 </div>
 
-                <button id="pay-now-btn" class="btn-primary">Pay Now</button>
-                <button id="back-to-menu-btn" class="btn-secondary">Back to Menu</button>
-            </div>
-
-            <!-- Payment Section -->
-            <div id="payment-section" class="payment-section" style="display: none;">
-                <h2>Payment</h2>
-                <div class="qr-container">
-                    <h3>Scan QR Code to Pay</h3>
-                    <canvas id="qr-code"></canvas>
-                    <p class="payment-amount">Amount: ₹<span id="payment-amount">0</span></p>
-                    <p class="payment-instructions">Scan the QR code with any UPI app to make payment</p>
+                <div class="modal-actions">
+                    <button id="generatePayment" class="btn btn--primary btn--full-width">Generate Payment & Send Order</button>
                 </div>
-
-                <div id="user-details-section" class="user-details" style="display: none;">
-                    <h3>Delivery Details</h3>
-                    <input type="text" id="customer-name" placeholder="Your Name" required />
-                    <textarea id="delivery-address" placeholder="Delivery Address" required></textarea>
-                    <input type="tel" id="customer-mobile" placeholder="Mobile Number" required />
-                    <button id="submit-order-btn" class="btn-primary">Submit Order</button>
-                </div>
-
-                <div id="payment-completion" class="payment-completion" style="display: none;">
-                    <h3>Payment Completed!</h3>
-                    <p id="payment-completion-message">Please share payment screenshot along with menu</p>
-                    <button id="new-order-btn" class="btn-primary">Place New Order</button>
-                </div>
-            </div>
-
-            <!-- Fallback for manual copy -->
-            <div id="fallback-section" class="fallback-section" style="display: none;">
-                <h3>Manual Order (Fallback)</h3>
-                <p>If WhatsApp didn't open automatically, copy the message below:</p>
-                <textarea id="fallback-text" readonly></textarea>
-                <button id="copy-fallback-btn" class="btn-secondary">Copy Message</button>
-                <p>Then paste it in WhatsApp chat with <span id="fallback-mobile">9766448463</span></p>
             </div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Success Message -->
+    <div id="successMessage" class="success-message hidden">
+        <div class="success-content">
+            <h3>✅ Order Sent Successfully!</h3>
+            <p>Please share payment screenshot along with menu</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
