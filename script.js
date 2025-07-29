@@ -180,7 +180,7 @@ function setupEventListeners() {
         if (paymentSection.style.display !== 'none') {
             userDetailsSection.style.display = 'block';
         }
-    }, 30000);
+    }, 7000);
 }
 
 function showCheckoutPage() {
