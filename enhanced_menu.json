@@ -23,7 +23,7 @@
     {
       "coupon_code": "WELCOME20",
       "discount_perc": 20,
-      "max_discount": 150,
+      "max_discount": 100,
       "min_order_value_for_coupon": 300
     }
   ],
