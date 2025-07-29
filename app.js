@@ -8,7 +8,7 @@
       upi_id: "9766448463@apl",
       upi_name: "Annapurna Kitchen",
       LIVE: "TRUE",
-      working_hours_IST: "10 AM: 7 PM",
+      working_hours_IST: "10 AM : 7 PM",
       max_packaging_charge: 50,
       convenience_fees: 0,
       platform_fees: 0,
