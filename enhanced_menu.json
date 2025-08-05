@@ -146,6 +146,41 @@
       "available": "true",
       "packaging_charge": 10,
       "image": "upwasThalipith.JPG"
+    },
+    {
+      "name": "Poli (5P)",
+      "price": "99",
+      "available": "true",
+      "packaging_charge": 5,
+      "image": "poli.JPG"
+    },
+    {
+      "name": "Dahi Koshimbir Cucumber+Carrot (serves 1)",
+      "price": "49",
+      "available": "true",
+      "packaging_charge": 8,
+      "image": "koshimbir_kakadi_tomato.JPG"
+    },
+    {
+      "name": "Dahi Koshimbir Beetroot+Carrot (serves 1)",
+      "price": "49",
+      "available": "true",
+      "packaging_charge": 8,
+      "image": "koshimbir_kakadi_tomato.JPG"
+    },
+    {
+      "name": "Dahi Koshimbir Tomato+Carrot (serves 1)",
+      "price": "39",
+      "available": "true",
+      "packaging_charge": 8,
+      "image": "koshimbir_kakadi_tomato.JPG"
+    },
+    {
+      "name": "Dahi Koshimbir Cucumber+Tomato (serves 1)",
+      "price": "39",
+      "available": "true",
+      "packaging_charge": 8,
+      "image": "koshimbir_kakadi_tomato.JPG"
     }
   ]
 }
