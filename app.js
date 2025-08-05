@@ -9,12 +9,12 @@
       upi_name: "Annapurna Kitchen",
       LIVE: "TRUE",
       working_hours_IST: "10 AM : 7 PM",
-      max_packaging_charge: 50,
+      max_packaging_charge: 500,
       convenience_fees: 0,
       platform_fees: 0,
       delivery_message: "Free for 5km radius, else depends on location sent via parcel services",
-      freshly_cooked_message: "As items are freshly cooked, it will take little time to serve you the authentic taste",
-      payment_completion_message: "Please share payment screenshot along with menu"
+      freshly_cooked_message: "Pre-booking recommended. As items are freshly cooked, it will take little time to serve you the authentic taste.",
+      payment_completion_message: "Please share payment screenshot along with menu details."
     },
     coupons: [
       {
@@ -47,7 +47,12 @@
       { name: "Bhagar (serves 1)", price: 149, available: true, packaging_charge: 10, image: "bhagar.JPG" },
       { name: "Bhagar (serves 2/3)", price: 289, available: true, packaging_charge: 20, image: "bhagar.JPG" },
       { name: "Sabudana Khichadi (serves 2)", price: 199, available: true, packaging_charge: 8, image: "sabudanKhichdi.JPG" },
-      { name: "Upwasache Thalipith (2P) + curd", price: 99, available: true, packaging_charge: 10, image: "upwasThalipith.JPG" }
+      { name: "Upwasache Thalipith (2P) + curd", price: 99, available: true, packaging_charge: 10, image: "upwasThalipith.JPG" },
+      { name: "Poli (5P)", price: 99, available: true, packaging_charge: 5, image: "poli.JPG" },
+      { name: "Dahi Koshimbir Cucumber+Carrot (serves 1)", price: 49, available: true, packaging_charge: 8, image: "koshimbir_kakadi_tomato.JPG" },
+      { name: "Dahi Koshimbir Beetroot+Carrot (serves 1)", price: 49, available: true, packaging_charge: 8, image: "koshimbir_kakadi_tomato.JPG" },
+      { name: "Dahi Koshimbir Tomato+Carrot (serves 1)", price: 39, available: true, packaging_charge: 8, image: "koshimbir_kakadi_tomato.JPG" },
+      { name: "Dahi Koshimbir Cucumber+Tomato (serves 1)", price: 39, available: true, packaging_charge: 8, image: "koshimbir_kakadi_tomato.JPG" }
     ],
     github_images_base_url: "https://raw.githubusercontent.com/vishalvkulkarni-tech/food-ordering/main/menu_images/"
   };
