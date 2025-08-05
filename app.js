@@ -48,11 +48,19 @@
       { name: "Bhagar (serves 2/3)", price: 289, available: true, packaging_charge: 20, image: "bhagar.JPG" },
       { name: "Sabudana Khichadi (serves 2)", price: 199, available: true, packaging_charge: 8, image: "sabudanKhichdi.JPG" },
       { name: "Upwasache Thalipith (2P) + curd", price: 99, available: true, packaging_charge: 10, image: "upwasThalipith.JPG" },
+      { name: "Sabudana Vada (2P) + Chutney", price: 89, available: true, packaging_charge: 10, image: "sabudanaVada.JPG" },
+      { name: "Sabudana Kheer (serves 1)", price: 139, available: true, packaging_charge: 10, image: "sabudanaKhir.JPG" },
+      { name: "Sabudana Kheer (serves 2/3)", price: 259, available: true, packaging_charge: 10, image: "sabudanaKhir.JPG" },
       { name: "Poli (5P)", price: 99, available: true, packaging_charge: 5, image: "poli.JPG" },
       { name: "Dahi Koshimbir Cucumber+Carrot (serves 1)", price: 49, available: true, packaging_charge: 8, image: "koshimbir_kakadi_tomato.JPG" },
       { name: "Dahi Koshimbir Beetroot+Carrot (serves 1)", price: 49, available: true, packaging_charge: 8, image: "koshimbir_kakadi_tomato.JPG" },
       { name: "Dahi Koshimbir Tomato+Carrot (serves 1)", price: 39, available: true, packaging_charge: 8, image: "koshimbir_kakadi_tomato.JPG" },
-      { name: "Dahi Koshimbir Cucumber+Tomato (serves 1)", price: 39, available: true, packaging_charge: 8, image: "koshimbir_kakadi_tomato.JPG" }
+      { name: "Dahi Koshimbir Cucumber+Tomato (serves 1)", price: 39, available: true, packaging_charge: 8, image: "koshimbir_kakadi_tomato.JPG" },
+      { name: "Pav Bhaji (2 Pav)", price: 119, available: true, packaging_charge: 10, image: "pavBhaji.JPG" },
+      { name: "Misal Pav (2 Pav)", price: 109, available: true, packaging_charge: 10, image: "misalPav.JPG" },
+      { name: "Pav (1P)", price: 17, available: true, packaging_charge: 1, image: "pavBhaji.JPG" },
+      { name: "Vad Pav (2P)", price: 79, available: true, packaging_charge: 1, image: "vadaPav.JPG" },
+      { name: "Grilled Vad Pav (2P)", price: 119, available: true, packaging_charge: 1, image: "grillVadaPav.JPG" }
     ],
     github_images_base_url: "https://raw.githubusercontent.com/vishalvkulkarni-tech/food-ordering/main/menu_images/"
   };
